@@ -1,26 +1,200 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --canvas: #f4f6fa;
+  --surface: #ffffff;
+  --ink: #152033;
+  --muted: #5c6b82;
+  --line: #e3e8f1;
+  --line-strong: #c5d0e3;
+  --primary: #2b4fc4;
+  --primary-hover: #3d63d6;
+  --primary-dark: #1f3d9e;
+  --primary-soft: #e8eefb;
+  --teal: #0f766e;
+  --teal-soft: #e7f4f2;
+  --success: #157a45;
+  --success-soft: #e7f6ee;
+  --warning: #b45309;
+  --warning-soft: #fff4e5;
+  --danger: #b42318;
+  --danger-hover: #c43228;
+  --danger-soft: #fdeceb;
+  --info: #1d4ed8;
+  --info-soft: #e8efff;
+  --sidebar: #132033;
+  --sidebar-text: #d5deea;
+  --sidebar-muted: #8ea0b8;
+  --sidebar-width: 248px;
+  --topbar-height: 56px;
+  --shadow-soft: 0 1px 2px rgba(19, 32, 51, 0.05);
+  --shadow-lift: 0 8px 18px rgba(19, 32, 51, 0.06);
+  --radius-control: 12px;
+  --radius-compact: 12px;
+  --radius-card: 16px;
+  --radius-feature: 20px;
+  --row-hover: #f6f8fc;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-dark: var(--primary-dark);
+  --color-primary-soft: var(--primary-soft);
+  --color-teal: var(--teal);
+  --color-teal-soft: var(--teal-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-text: var(--sidebar-text);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-row-hover: var(--row-hover);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --radius-control: var(--radius-control);
+  --radius-compact: var(--radius-compact);
+  --radius-card: var(--radius-card);
+  --radius-feature: var(--radius-feature);
+  --shadow-soft: var(--shadow-soft);
+  --shadow-lift: var(--shadow-lift);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-geist-sans), "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+::selection {
+  background: #d9e2fb;
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--primary);
+  width: 1rem;
+  height: 1rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.data-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.data-table thead {
+  background: var(--canvas);
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.data-table th,
+.data-table td {
+  padding: 0.7rem 0.75rem;
+  vertical-align: middle;
+}
+
+.data-table th {
+  font-weight: 500;
+}
+
+.data-table tbody tr {
+  border-top: 1px solid var(--line);
+  transition: background-color 180ms ease;
+}
+
+.data-table tbody tr:hover {
+  background: var(--row-hover);
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 2.25rem;
+  flex: none;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: white;
+  padding: 0 0.9rem;
+  font-size: 0.875rem;
+  color: var(--ink);
+  white-space: nowrap;
+  transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+
+.filter-chip:hover {
+  background: #f4f6fb;
+  border-color: var(--line-strong);
+}
+
+.filter-chip[data-active="true"] {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.filter-chip[data-active="true"]:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.filter-chip.compact {
+  height: 2rem;
+  padding: 0 0.7rem;
+  font-size: 0.75rem;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
 }

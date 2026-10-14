@@ -1,0 +1,61 @@
+import "server-only";
+import { ActivityLog, Content, DailyWorkEntry, Deadline, EmergencyUpdate, Opportunity, Professor, Scholarship, University } from "@/models";
+import { Country } from "@/models/reference";
+import { Assignment } from "@/models/platform";
+import { asRecord } from "@/lib/serialize";
+import { deadlineState } from "@/server/domain/deadlines";
+import { ready } from "@/server/services/query";
+import { getSettings } from "@/server/services/settings";
+
+export async function dashboardData() {
+  await ready();
+  const settings = await getSettings();
+  const now = new Date();
+  const [
+    scholarships,
+    universities,
+    professors,
+    countries,
+    opportunities,
+    content,
+    published,
+    readyToPublish,
+    emergencies,
+    activity,
+    contentCounts,
+    deadlines,
+    assignments,
+  ] = await Promise.all([
+    Scholarship.countDocuments({ archivedAt: null }),
+    University.countDocuments({ archivedAt: null }),
+    Professor.countDocuments({ archivedAt: null }),
+    Country.countDocuments({ active: true }),
+    Opportunity.countDocuments({ archivedAt: null }),
+    Content.countDocuments({ archivedAt: null }),
+    Content.countDocuments({ archivedAt: null, contentStatus: "published" }),
+    Content.countDocuments({ archivedAt: null, contentStatus: "ready_to_publish" }),
+    EmergencyUpdate.countDocuments({ archivedAt: null, urgency: "emergency" }),
+    ActivityLog.find().sort({ timestamp: -1 }).limit(8).lean(),
+    Content.aggregate([{ $match: { archivedAt: null } }, { $group: { _id: "$contentStatus", count: { $sum: 1 } } }]),
+    Deadline.find({ archivedAt: null, closingDate: { $ne: null } }).select("closingDate timezone").lean(),
+    Assignment.aggregate([{ $match: { status: "active" } }, { $group: { _id: "$userId", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 5 }]),
+  ]);
+  const buckets = { next5: 0, next7: 0, next30: 0, next60: 0 };
+  for (const deadline of deadlines) {
+    const state = deadlineState({ closingDate: deadline.closingDate, timeZone: deadline.timezone, warningDays: settings.deadlineWarningDays, now });
+    if (state === "closed" || state === "unknown" || !deadline.closingDate) continue;
+    const days = Math.ceil((new Date(deadline.closingDate).getTime() - now.getTime()) / 86_400_000);
+    if (days <= 5) buckets.next5 += 1;
+    if (days <= 7) buckets.next7 += 1;
+    if (days <= 30) buckets.next30 += 1;
+    if (days <= 60) buckets.next60 += 1;
+  }
+  const work = await DailyWorkEntry.countDocuments({ workDate: now.toISOString().slice(0, 10) });
+  return {
+    metrics: { scholarships, universities, professors, countries, opportunities, content, published, readyToPublish, emergencies, work },
+    buckets,
+    contentCounts: Object.fromEntries(contentCounts.map((row) => [String(row._id), row.count as number])),
+    activity: activity.map((row) => asRecord(row)),
+    workload: assignments.map((row) => ({ userId: String(row._id), count: row.count as number })),
+  };
+}

@@ -1,0 +1,131 @@
+export const PERMISSIONS = [
+  "scholarship.read",
+  "scholarship.create",
+  "scholarship.update",
+  "scholarship.verify",
+  "scholarship.publish",
+  "university.read",
+  "university.create",
+  "university.update",
+  "university.verify",
+  "professor.read",
+  "professor.create",
+  "professor.update",
+  "professor.verify",
+  "opportunity.read",
+  "opportunity.create",
+  "opportunity.update",
+  "opportunity.verify",
+  "emergency.read",
+  "emergency.create",
+  "emergency.update",
+  "emergency.verify",
+  "content.read",
+  "content.create",
+  "content.update",
+  "content.assign",
+  "content.design",
+  "content.review",
+  "content.publish",
+  "deadline.read",
+  "deadline.update",
+  "verification.read",
+  "verification.update",
+  "team.manage",
+  "settings.manage",
+  "custom_fields.manage",
+  "activity.read",
+  "import.run",
+  "export.run",
+  "daily_work.manage",
+  "record.archive",
+  "record.delete",
+] as const;
+
+export type Permission = (typeof PERMISSIONS)[number];
+
+const readResearch: Permission[] = [
+  "scholarship.read",
+  "university.read",
+  "professor.read",
+  "opportunity.read",
+  "emergency.read",
+  "content.read",
+  "deadline.read",
+  "verification.read",
+  "activity.read",
+  "daily_work.manage",
+];
+
+export const DEFAULT_ROLE_PERMISSIONS: Record<string, Permission[]> = {
+  admin: [...PERMISSIONS],
+  researcher: [
+    ...readResearch,
+    "scholarship.create",
+    "scholarship.update",
+    "university.create",
+    "university.update",
+    "professor.create",
+    "professor.update",
+    "opportunity.create",
+    "opportunity.update",
+    "emergency.create",
+    "emergency.update",
+    "content.create",
+    "deadline.update",
+    "import.run",
+    "export.run",
+    "record.archive",
+  ],
+  verifier: [
+    ...readResearch,
+    "scholarship.verify",
+    "university.verify",
+    "professor.verify",
+    "opportunity.verify",
+    "emergency.verify",
+    "verification.update",
+    "content.review",
+  ],
+  content_manager: [
+    ...readResearch,
+    "content.create",
+    "content.update",
+    "content.assign",
+    "content.review",
+    "content.publish",
+    "emergency.update",
+    "export.run",
+  ],
+  editor: [...readResearch, "content.update", "content.review"],
+  designer: [...readResearch, "content.design", "content.update"],
+  viewer: [
+    "scholarship.read",
+    "university.read",
+    "professor.read",
+    "opportunity.read",
+    "emergency.read",
+    "content.read",
+    "deadline.read",
+    "verification.read",
+    "activity.read",
+  ],
+};
+
+export const ROLE_LABELS: Record<string, string> = {
+  admin: "Admin",
+  researcher: "Researcher",
+  verifier: "Verifier",
+  content_manager: "Content Manager",
+  editor: "Editor",
+  designer: "Designer",
+  viewer: "Viewer",
+};
+
+export function hasPermission(granted: readonly string[], permission: string) {
+  return granted.includes(permission);
+}
+
+export function hasAnyPermission(granted: readonly string[], permissions: readonly string[]) {
+  return permissions.some((permission) => granted.includes(permission));
+}
