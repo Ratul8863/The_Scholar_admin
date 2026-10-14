@@ -45,7 +45,13 @@ export default async function ContentPage() {
           {data.fresh.map((item) => <li key={`${item.type}-${item.id}`}><Link className="text-primary" href={item.href}>{item.title}</Link> <span className="text-muted">{item.type}</span></li>)}
         </ul>
       </SectionCard>
-      <SectionCard title="Ready to publish" action={can(user, "content.create") ? <Button asChild variant="outline" size="sm"><Link href="/content/new">Create content</Link></Button> : null}>
+      <SectionCard title="In progress" action={can(user, "content.create") ? <Button asChild variant="outline" size="sm"><Link href="/content/new">Create content</Link></Button> : null}>
+        <ul className="space-y-2 text-sm">
+          {data.inProgress.length === 0 ? <li className="text-muted">New content starts here, before it is ready to publish.</li> : null}
+          {data.inProgress.map((item) => <li key={String(item.id)} className="flex flex-wrap items-center justify-between gap-2"><Link className="font-medium text-primary" href={`/content/${item.id}`}>{String(item.title)}</Link><Badge tone={statusTone(String(item.contentStatus))}>{titleCaseStatus(String(item.contentStatus))}</Badge></li>)}
+        </ul>
+      </SectionCard>
+      <SectionCard title="Ready to publish">
         <ul className="space-y-2 text-sm">
           {data.readyToPublish.length === 0 ? <li className="text-muted">Nothing is waiting for an explicit publish.</li> : null}
           {data.readyToPublish.map((item) => <li key={String(item.id)}><Link className="font-medium text-primary" href={`/content/${item.id}`}>{String(item.title)}</Link></li>)}

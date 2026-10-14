@@ -10,6 +10,11 @@ import { writeAudit } from "@/server/services/audit";
 import { archiveDeadlines, cleanDate, cleanUrl, customValues, syncDeadline } from "@/server/services/relations";
 import { archiveDoc, countryLookup, oid, paginate, ready, requireCountry, saveUpdate, searchClause, type DocModel } from "@/server/services/query";
 
+function choice(value: unknown, fallback: string) {
+  const text = String(value ?? "").trim();
+  return text || fallback;
+}
+
 const universities = University as unknown as DocModel;
 const programs = UniversityProgram as unknown as DocModel;
 const intakes = ProgramIntake as unknown as DocModel;
@@ -156,7 +161,7 @@ export async function saveProgram(user: CurrentUser, input: Record<string, unkno
     language: String(input.language ?? ""),
     website: cleanUrl(input.website),
     applicationUrl: cleanUrl(input.applicationUrl),
-    applicationStatus: String(input.applicationStatus ?? "unknown"),
+    applicationStatus: choice(input.applicationStatus, "unknown"),
     tuitionFee: input.tuitionFee === "" || input.tuitionFee == null ? null : Number(input.tuitionFee),
     currency: String(input.currency ?? ""),
     tuitionPeriod: String(input.tuitionPeriod ?? ""),
@@ -165,8 +170,8 @@ export async function saveProgram(user: CurrentUser, input: Record<string, unkno
     academicRequirements: String(input.academicRequirements ?? ""),
     admissionRequirements: String(input.admissionRequirements ?? ""),
     eligibility: String(input.eligibility ?? ""),
-    bangladeshEligible: String(input.bangladeshEligible ?? "unknown"),
-    scholarshipAvailable: String(input.scholarshipAvailable ?? "unknown"),
+    bangladeshEligible: choice(input.bangladeshEligible, "unknown"),
+    scholarshipAvailable: choice(input.scholarshipAvailable, "unknown"),
     fieldAvailability: input.fieldAvailability ?? {},
     customFields: await customValues("program", (input.customFields as Record<string, unknown>) ?? {}),
     updatedBy: oid(user.id),

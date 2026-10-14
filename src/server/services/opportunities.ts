@@ -131,7 +131,7 @@ export async function saveEmergency(user: CurrentUser, input: Record<string, unk
   const title = String(input.title ?? "").trim();
   const information = String(input.information ?? "").trim();
   if (!title || !information) throw new AppError("validation", "Title and information are required.");
-  const urgency = String(input.urgency ?? "normal");
+  const urgency = String(input.urgency ?? "").trim() || "normal";
   if (!["normal", "high", "emergency"].includes(urgency)) throw new AppError("validation", "Choose a valid urgency.");
   const data = {
     title,

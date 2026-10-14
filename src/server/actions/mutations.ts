@@ -32,6 +32,19 @@ function text(formData: FormData) {
   return Object.fromEntries(formData.entries()) as Record<string, string>;
 }
 
+function recordPath(entityType: string, entityId: string) {
+  const paths: Record<string, string> = {
+    scholarship: `/scholarships/${entityId}`,
+    university: `/universities/${entityId}`,
+    program: `/universities/programs/${entityId}`,
+    professor: `/professors/records/${entityId}`,
+    opportunity: `/opportunities/view/${entityId}`,
+    emergency: `/emergency/${entityId}`,
+    content: `/content/${entityId}`,
+  };
+  return paths[entityType] ?? "/dashboard";
+}
+
 export async function loginAction(formData: FormData) {
   try {
     await signIn("credentials", {
@@ -121,6 +134,7 @@ export async function saveProgramAction(input: Record<string, unknown>) {
     const user = await gate("university.update");
     const id = await saveProgram(user, input);
     revalidatePath("/universities");
+    if (input.universityId) revalidatePath(`/universities/${input.universityId}`);
     return { id };
   });
 }
@@ -128,28 +142,36 @@ export async function saveProgramAction(input: Record<string, unknown>) {
 export async function saveIntakeAction(input: Record<string, unknown>) {
   return runAction(async () => {
     const user = await gate("university.update");
-    return { id: await saveIntake(user, input) };
+    const id = await saveIntake(user, input);
+    if (input.programId) revalidatePath(`/universities/programs/${input.programId}`);
+    return { id };
   });
 }
 
 export async function saveRankingAction(input: Record<string, unknown>) {
   return runAction(async () => {
     const user = await gate("university.update");
-    return { id: await saveRanking(user, input) };
+    const id = await saveRanking(user, input);
+    if (input.universityId) revalidatePath(`/universities/${input.universityId}`);
+    return { id };
   });
 }
 
 export async function saveProfessorUniversityAction(input: Record<string, unknown>) {
   return runAction(async () => {
     const user = await gate("professor.create");
-    return { id: await createProfessorUniversity(user, input) };
+    const id = await createProfessorUniversity(user, input);
+    revalidatePath("/professors");
+    return { id };
   });
 }
 
 export async function saveDepartmentAction(input: Record<string, unknown>) {
   return runAction(async () => {
     const user = await gate("professor.create");
-    return { id: await createDepartment(user, input) };
+    const id = await createDepartment(user, input);
+    if (input.professorUniversityId) revalidatePath(`/professors/universities/${input.professorUniversityId}`);
+    return { id };
   });
 }
 
@@ -182,7 +204,9 @@ export async function bulkArchiveProfessorsAction(ids: string[]) {
 export async function savePublicationAction(input: Record<string, unknown>) {
   return runAction(async () => {
     const user = await gate("professor.update");
-    return { id: await addPublication(user, input) };
+    const id = await addPublication(user, input);
+    if (input.professorId) revalidatePath(`/professors/records/${input.professorId}`);
+    return { id };
   });
 }
 
@@ -224,7 +248,9 @@ export async function archiveEmergencyAction(id: string) {
 export async function saveContentAction(input: Record<string, unknown>) {
   return runAction(async () => {
     const user = await gate(input.id ? "content.update" : "content.create");
-    return { id: await saveContent(user, input) };
+    const id = await saveContent(user, input);
+    revalidatePath("/content");
+    return { id };
   });
 }
 
@@ -249,7 +275,10 @@ export async function saveVerificationAction(input: Record<string, unknown>) {
 export async function addNoteAction(formData: FormData) {
   await voidAction(runAction(async () => {
     const user = await getCurrentUser();
-    await addNote(user, String(formData.get("entityType")), String(formData.get("entityId")), String(formData.get("category") ?? "general"), String(formData.get("body") ?? ""));
+    const entityType = String(formData.get("entityType"));
+    const entityId = String(formData.get("entityId"));
+    await addNote(user, entityType, entityId, String(formData.get("category") ?? "general"), String(formData.get("body") ?? ""));
+    revalidatePath(recordPath(entityType, entityId));
     return { id: "ok" };
   }));
 }
@@ -257,14 +286,17 @@ export async function addNoteAction(formData: FormData) {
 export async function addSourceAction(formData: FormData) {
   await voidAction(runAction(async () => {
     const user = await getCurrentUser();
+    const entityType = String(formData.get("entityType"));
+    const entityId = String(formData.get("entityId"));
     await addSource(user, {
-      entityType: String(formData.get("entityType")),
-      entityId: String(formData.get("entityId")),
+      entityType,
+      entityId,
       sourceName: String(formData.get("sourceName") ?? ""),
       sourceType: String(formData.get("sourceType") ?? "official"),
       url: String(formData.get("url") ?? ""),
       description: String(formData.get("description") ?? ""),
     });
+    revalidatePath(recordPath(entityType, entityId));
     return { id: "ok" };
   }));
 }
@@ -287,7 +319,9 @@ export async function assignAction(formData: FormData) {
 export async function dailyEntryAction(formData: FormData) {
   await voidAction(runAction(async () => {
     const user = await gate("daily_work.manage");
-    return { id: await addDailyEntry(user, text(formData)) };
+    const id = await addDailyEntry(user, text(formData));
+    revalidatePath("/daily-work");
+    return { id };
   }));
 }
 
@@ -339,7 +373,9 @@ export async function saveCountryAction(formData: FormData) {
 export async function saveCatalogAction(kind: keyof typeof catalogs, formData: FormData) {
   await voidAction(runAction(async () => {
     const user = await gate("settings.manage");
-    return { id: await saveCatalogItem(user, kind, text(formData)) };
+    const id = await saveCatalogItem(user, kind, text(formData));
+    revalidatePath("/settings");
+    return { id };
   }));
 }
 
@@ -347,6 +383,7 @@ export async function saveStatusAction(formData: FormData) {
   await voidAction(runAction(async () => {
     const user = await gate("settings.manage");
     await saveStatus(user, text(formData));
+    revalidatePath("/settings");
     return { id: "ok" };
   }));
 }
@@ -364,6 +401,7 @@ export async function saveRolePermissionsAction(roleId: string, permissions: str
   return runAction(async () => {
     const user = await gate("settings.manage");
     await updateRolePermissions(user, roleId, permissions);
+    revalidatePath("/settings");
     return { id: roleId };
   });
 }
@@ -371,7 +409,9 @@ export async function saveRolePermissionsAction(roleId: string, permissions: str
 export async function saveTemplateAction(formData: FormData) {
   await voidAction(runAction(async () => {
     const user = await gate("settings.manage");
-    return { id: await saveTemplate(user, text(formData)) };
+    const id = await saveTemplate(user, text(formData));
+    revalidatePath("/settings");
+    return { id };
   }));
 }
 
@@ -379,6 +419,7 @@ export async function saveSettingsAction(formData: FormData) {
   await voidAction(runAction(async () => {
     const user = await gate("settings.manage");
     await updateSettings(user, text(formData));
+    revalidatePath("/settings");
     return { id: "ok" };
   }));
 }

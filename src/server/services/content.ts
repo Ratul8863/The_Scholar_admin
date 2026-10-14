@@ -21,7 +21,7 @@ export async function saveContent(user: CurrentUser, input: Record<string, unkno
   if (title.length < 2) throw new AppError("validation", "Enter a content title.");
   const data = {
     title,
-    contentType: String(input.contentType ?? "update"),
+    contentType: String(input.contentType ?? "").trim() || "update",
     relatedEntityType: String(input.relatedEntityType ?? ""),
     relatedEntityId: oid(String(input.relatedEntityId)),
     countryId: input.countryId ? oid(String(input.countryId)) : null,
@@ -97,8 +97,9 @@ export async function contentWorkspace(user: CurrentUser) {
   const now = new Date();
   const soon = new Date(now.getTime() + settings.openingSoonDays * 86_400_000);
   const freshAfter = new Date(now.getTime() - settings.newInformationDays * 86_400_000);
-  const [emergency, readyToPublish, published, deadlines, scholarships, opportunities, universities, emergencies] = await Promise.all([
+  const [emergency, inProgress, readyToPublish, published, deadlines, scholarships, opportunities, universities, emergencies] = await Promise.all([
     EmergencyUpdate.find({ archivedAt: null }).sort({ urgency: -1, createdAt: -1 }).limit(8).lean(),
+    Content.find({ archivedAt: null, contentStatus: { $nin: ["ready_to_publish", "published", "archived"] } }).sort({ updatedAt: -1 }).limit(12).lean(),
     Content.find({ archivedAt: null, contentStatus: "ready_to_publish" }).sort({ readyDate: 1 }).limit(12).lean(),
     Content.find({ archivedAt: null, contentStatus: "published" }).sort({ publishedDate: -1 }).limit(12).lean(),
     Deadline.find({ archivedAt: null, closingDate: { $gte: now } }).sort({ closingDate: 1 }).limit(40).lean(),
@@ -127,6 +128,7 @@ export async function contentWorkspace(user: CurrentUser) {
       ...universities.map((row) => ({ id: String(row._id), title: row.name, type: "University", href: `/universities/${row._id}`, updatedAt: row.updatedAt })),
       ...emergencies.map((row) => ({ id: String(row._id), title: row.title, type: "Emergency", href: `/emergency/${row._id}`, updatedAt: row.createdAt })),
     ].sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt)).slice(0, 12),
+    inProgress: inProgress.map((row) => asRecord(row)),
     readyToPublish: readyToPublish.map((row) => asRecord(row)),
     published: published.map((row) => asRecord(row)),
     productivity: Object.fromEntries(productivity.map((row) => [String(row._id), row.count as number])),
