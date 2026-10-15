@@ -22,9 +22,9 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
 
   return (
     <main className="grid min-h-screen place-items-center bg-canvas px-4">
-      <div className="w-full max-w-md rounded-[20px] border border-line bg-white p-6 shadow-[var(--shadow-soft)] sm:p-8">
+      <div className="warm-sheet w-full max-w-md">
         <ScholarLogo className="mb-5 w-44" />
-        <h1 className="text-[1.75rem] font-normal tracking-tight text-primary">Accept invitation</h1>
+        <h1 className="page-title">Accept invitation</h1>
         {preview.state !== "valid" ? (
           <p className="mt-3 text-sm text-danger" role="alert">{messages[preview.state] ?? messages.invalid}</p>
         ) : (

@@ -35,7 +35,7 @@ export default async function DeadlinesPage({ searchParams }: { searchParams: Pr
           </RecordCard>
         ))}
       </div>
-      <div className="table-scroll hidden rounded-[12px] border border-line bg-white shadow-[var(--shadow-soft)] md:block">
+      <div className="data-sheet table-scroll hidden md:block">
         <table className="data-table">
           <thead><tr><th>Record</th><th>Type</th><th>State</th><th>Days remaining</th><th>Days until opening</th></tr></thead>
           <tbody>

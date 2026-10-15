@@ -88,9 +88,8 @@ function ChoiceList({
           role="option"
           aria-selected={option.value === value}
           className={cn(
-            "flex min-h-11 w-full items-center justify-between gap-3 rounded-full px-3 text-left text-sm transition-colors duration-[180ms]",
-            index === active ? "bg-primary-soft text-ink" : "hover:bg-canvas",
-            option.value === value && "text-primary",
+            "sand-option",
+            index === active && "is-active",
           )}
           onMouseEnter={() => onActive(index)}
           onClick={() => onPick(option)}
@@ -233,7 +232,7 @@ export function Select({
         <Popover.Content
           align="start"
           sideOffset={6}
-          className="z-50 w-[var(--radix-popover-trigger-width)] min-w-56 rounded-[16px] border border-line bg-white p-0 shadow-[var(--shadow-lift)]"
+          className="sand-menu w-[var(--radix-popover-trigger-width)] min-w-56"
           onKeyDown={onKeyDown}
         >
           <ChoiceList options={parsed} value={current} active={active} listId={listId} onActive={setActive} onPick={(option) => commit(option.value)} empty="No choices" />
@@ -376,7 +375,7 @@ export function Combobox({
         </button>
       </Popover.Trigger>
       <Popover.Portal>
-        <Popover.Content align="start" sideOffset={6} className="z-50 w-[var(--radix-popover-trigger-width)] min-w-64 rounded-[16px] border border-line bg-white shadow-[var(--shadow-lift)]" onOpenAutoFocus={(event) => { event.preventDefault(); inputRef.current?.focus(); }}>
+        <Popover.Content align="start" sideOffset={6} className="sand-menu w-[var(--radix-popover-trigger-width)] min-w-64" onOpenAutoFocus={(event) => { event.preventDefault(); inputRef.current?.focus(); }}>
           <div className="border-b border-line p-2">
             <input
               ref={inputRef}
@@ -489,11 +488,11 @@ export function DateField({
         </button>
       </Popover.Trigger>
       <Popover.Portal>
-        <Popover.Content id={listId} role="dialog" aria-label="Choose a date" align="start" sideOffset={6} className="z-50 w-96 rounded-[16px] border border-line bg-white p-3 shadow-[var(--shadow-lift)]">
+        <Popover.Content id={listId} role="dialog" aria-label="Choose a date" align="start" sideOffset={6} className="sand-menu w-96">
           <div className="mb-2 flex items-center justify-between">
-            <button type="button" className="grid h-11 w-11 place-items-center rounded-full text-ink transition-colors duration-[180ms] hover:bg-primary-soft" aria-label="Previous month" onClick={() => setCursor(addMonths(cursor, -1))}><ChevronLeft className="h-4 w-4" /></button>
-            <p className="text-sm font-medium">{format(cursor, "MMMM yyyy")}</p>
-            <button type="button" className="grid h-11 w-11 place-items-center rounded-full text-ink transition-colors duration-[180ms] hover:bg-primary-soft" aria-label="Next month" onClick={() => setCursor(addMonths(cursor, 1))}><ChevronRight className="h-4 w-4" /></button>
+            <button type="button" className="icon-circle" aria-label="Previous month" onClick={() => setCursor(addMonths(cursor, -1))}><ChevronLeft className="h-4 w-4" /></button>
+            <p className="type-16">{format(cursor, "MMMM yyyy")}</p>
+            <button type="button" className="icon-circle" aria-label="Next month" onClick={() => setCursor(addMonths(cursor, 1))}><ChevronRight className="h-4 w-4" /></button>
           </div>
           <div className="grid grid-cols-7 gap-1 text-center text-xs text-muted" aria-hidden>
             {["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map((day) => <span key={day} className="py-1">{day}</span>)}
@@ -511,12 +510,7 @@ export function DateField({
                   disabled={!allowed(day)}
                   aria-selected={selected}
                   aria-label={format(day, "d MMMM yyyy")}
-                  className={cn(
-                    "h-11 rounded-full text-sm transition-colors duration-[180ms] disabled:text-line-strong",
-                    !isSameMonth(day, cursor) && "text-muted",
-                    selected ? "bg-primary text-white" : "hover:bg-primary-soft",
-                    !selected && isToday(day) && "ring-1 ring-primary",
-                  )}
+                  className={cn("day-pill", !isSameMonth(day, cursor) && "text-muted", !selected && isToday(day) && "ring-1 ring-[var(--accent)]")}
                   onClick={() => commit(iso)}
                   onKeyDown={(event) => onGridKeyDown(event, day)}
                 >
@@ -525,7 +519,7 @@ export function DateField({
               );
             })}
           </div>
-          {!required ? <button type="button" className="mt-2 h-11 rounded-full px-3 text-sm text-muted transition-colors duration-[180ms] hover:bg-primary-soft hover:text-ink" onClick={() => commit("")}>Clear date</button> : null}
+          {!required ? <button type="button" className="nav-pill mt-2" onClick={() => commit("")}>Clear date</button> : null}
         </Popover.Content>
       </Popover.Portal>
       </div>

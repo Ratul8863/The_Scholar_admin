@@ -49,9 +49,9 @@ export function DataTable({
         ))}
       </div>
       {selectable && selected.length ? (
-        <button type="button" className="mb-3 inline-flex h-10 items-center rounded-full bg-danger px-3.5 text-sm font-medium text-white transition-colors duration-[180ms] hover:bg-danger-hover" onClick={() => onSelection?.(selected)}>Archive selected ({selected.length})</button>
+        <button type="button" className="danger-pill mb-3" onClick={() => onSelection?.(selected)}>Archive selected ({selected.length})</button>
       ) : null}
-      <div className="table-scroll rounded-[12px] border border-line bg-white shadow-[var(--shadow-soft)]">
+      <div className="data-sheet table-scroll">
         <table className="data-table min-w-[760px]">
           <thead className="sticky top-0">
             {table.getHeaderGroups().map((group) => (

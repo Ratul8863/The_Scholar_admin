@@ -42,7 +42,7 @@ export default async function ScholarshipsPage({ searchParams }: { searchParams:
             );
           })}
         </div>
-        <div className="table-scroll hidden rounded-[12px] border border-line bg-white shadow-[var(--shadow-soft)] md:block">
+        <div className="data-sheet table-scroll hidden md:block">
           <table className="data-table min-w-[860px]">
             <thead><tr><th>Name</th><th>Provider</th><th>Country</th><th>Research</th><th>Publication</th><th>Deadline</th></tr></thead>
             <tbody>

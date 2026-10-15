@@ -2,27 +2,23 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Activity,
   BadgeCheck,
   BookOpen,
   Building2,
   CalendarClock,
+  ChevronDown,
+  ChevronRight,
   GraduationCap,
   LayoutDashboard,
-  ChevronsLeft,
-  ChevronsRight,
-  Menu,
   NotebookPen,
   Settings,
   Shield,
   Users,
-  X,
 } from "lucide-react";
 import { ScholarLogo } from "@/components/brand/scholar-logo";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 type Item = { href: string; label: string; icon: React.ComponentType<{ className?: string }>; permission?: string };
 
@@ -53,8 +49,51 @@ const items: { label: string; entries: Item[] }[] = [
       { href: "/activity", label: "Activity Log", icon: Activity, permission: "activity.read" },
     ],
   },
-  { label: "Administration", entries: [{ href: "/settings", label: "Settings", icon: Settings, permission: "settings.manage" }, { href: "/imports", label: "Import", icon: Activity, permission: "import.run" }] },
+  {
+    label: "Administration",
+    entries: [
+      { href: "/settings", label: "Settings", icon: Settings, permission: "settings.manage" },
+      { href: "/imports", label: "Import", icon: Activity, permission: "import.run" },
+    ],
+  },
 ];
+
+function OrgMenu({
+  user,
+  logoutAction,
+}: {
+  user: { name: string; roleName: string };
+  logoutAction: () => Promise<void>;
+}) {
+  const [open, setOpen] = useState(false);
+  const slot = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function close(event: MouseEvent) {
+      if (!slot.current?.contains(event.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, []);
+
+  return (
+    <div className="org-slot" ref={slot}>
+      <button type="button" className="org-trigger" aria-expanded={open} aria-haspopup="menu" onClick={() => setOpen((value) => !value)}>
+        <span className="min-w-0 flex-1 truncate">{user.name}</span>
+        <ChevronDown className="h-4 w-4 shrink-0" aria-hidden />
+      </button>
+      {open ? (
+        <div className="org-menu" role="menu">
+          <p className="type-16 truncate">{user.name}</p>
+          <p className="type-14 mb-3 truncate">{user.roleName}</p>
+          <form action={logoutAction}>
+            <button type="submit" className="open-pill w-full" role="menuitem">Log out</button>
+          </form>
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 export function AppShell({
   user,
@@ -66,98 +105,68 @@ export function AppShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
   const visible = items
     .map((group) => ({
       ...group,
       entries: group.entries.filter((entry) => !entry.permission || user.permissions.includes(entry.permission)),
     }))
     .filter((group) => group.entries.length);
+  const flat = visible.flatMap((group) => group.entries);
 
-  const nav = (compact: boolean, onClose?: () => void) => (
-    <nav className={cn("flex min-h-full flex-col gap-4 py-3", compact ? "px-2" : "px-3")} aria-label="Primary">
-      <div className="flex items-center gap-2">
-        <Link
-          href="/dashboard"
-          aria-label="The Scholar"
-          className={cn(
-            "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white",
-            compact ? "grid h-11 w-11 place-items-center overflow-hidden rounded-full bg-white" : "block min-w-0 flex-1 rounded-full bg-white px-3 py-2",
-          )}
-        >
-          <ScholarLogo variant={compact ? "mark" : "lockup"} alt="" className={compact ? "h-6 w-auto max-w-9" : "max-w-full"} />
-        </Link>
-        {onClose ? (
-          <button type="button" className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-sidebar-text transition-colors duration-[180ms] hover:bg-sidebar-hover hover:text-white" onClick={onClose} aria-label="Close">
-            <X className="h-4 w-4" />
-          </button>
-        ) : null}
-      </div>
-      <div className="flex flex-1 flex-col gap-4">
-        {visible.map((group) => (
-          <div key={group.label || "home"}>
-            {group.label && !compact ? <p className="px-3 pb-1 text-[11px] font-medium uppercase tracking-[0.14em] text-sidebar-muted">{group.label}</p> : null}
-            <ul className="space-y-1">
-              {group.entries.map((entry) => {
-                const active = pathname === entry.href || (entry.href !== "/dashboard" && pathname.startsWith(entry.href));
-                const Icon = entry.icon;
-                return (
-                  <li key={entry.href}>
-                    <Link
-                      href={entry.href}
-                      title={entry.label}
-                      onClick={() => setOpen(false)}
-                      className={cn(
-                        "group flex min-h-11 min-w-0 items-center gap-2 rounded-full px-3 text-sm text-sidebar-text transition-colors duration-[180ms]",
-                        compact && "justify-center px-0",
-                        active ? "bg-primary text-white" : "hover:bg-sidebar-hover hover:text-white",
-                      )}
-                    >
-                      <Icon className={cn("h-4 w-4 shrink-0 transition-colors duration-[180ms]", active ? "text-white" : "text-sidebar-muted group-hover:text-white")} />
-                      {compact ? <span className="sr-only">{entry.label}</span> : <span className="truncate">{entry.label}</span>}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
-      </div>
-      <button type="button" className={cn("hidden min-h-11 w-full items-center gap-2 rounded-full px-3 text-left text-xs text-sidebar-muted transition-colors duration-[180ms] hover:bg-sidebar-hover hover:text-white md:flex", compact && "justify-center px-0")} aria-label={compact ? "Expand sidebar" : "Collapse sidebar"} onClick={() => setCollapsed((value) => !value)}>
-        {compact ? <ChevronsRight className="h-4 w-4" /> : <><ChevronsLeft className="h-4 w-4 shrink-0" /><span className="truncate">Collapse sidebar</span></>}
-      </button>
-    </nav>
-  );
+  function current(href: string) {
+    return pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
+  }
 
   return (
-    <div className="min-h-screen overflow-x-clip bg-canvas text-ink">
-      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded-full focus:bg-white focus:px-3 focus:py-2">Skip to content</a>
-      <aside className={cn("fixed inset-y-0 left-0 z-30 hidden overflow-x-hidden overflow-y-auto border-r border-sidebar-line bg-sidebar motion-safe:transition-[width] motion-safe:duration-[180ms] md:block", collapsed ? "w-[72px]" : "w-[248px]")}>{nav(collapsed)}</aside>
-      {open ? (
-        <div className="fixed inset-0 z-40 md:hidden">
-          <button className="absolute inset-0 bg-ink/40" aria-label="Close menu" onClick={() => setOpen(false)} />
-          <div className="relative h-full w-[min(100%,280px)] overflow-x-hidden overflow-y-auto bg-sidebar">{nav(false, () => setOpen(false))}</div>
+    <div className="app-frame">
+      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:start-3 focus:top-3 focus:z-50 focus:rounded-full focus:bg-white focus:px-3 focus:py-2">Skip to content</a>
+      <aside className="shell-aside">
+        <div className="rail-col">
+          <Link href="/dashboard" className="rail-brand" aria-label="The Scholar">
+            <ScholarLogo variant="lockup" alt="" />
+          </Link>
+          <OrgMenu user={user} logoutAction={logoutAction} />
+          <nav aria-label="Primary">
+            {visible.map((group) => (
+              <div key={group.label || "home"} className="mb-4">
+                {group.label ? <p className="type-14 mb-1 px-3">{group.label}</p> : null}
+                <ul className="grid gap-1">
+                  {group.entries.map((entry) => {
+                    const Icon = entry.icon;
+                    const active = current(entry.href);
+                    return (
+                      <li key={entry.href}>
+                        <Link href={entry.href} className="nav-pill w-full justify-start" aria-current={active ? "page" : undefined} title={entry.label}>
+                          <Icon className="h-4 w-4 shrink-0" aria-hidden />
+                          <span className="min-w-0 flex-1 truncate text-start">{entry.label}</span>
+                          <ChevronRight className="nav-arrow h-4 w-4 shrink-0" aria-hidden />
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+          </nav>
         </div>
-      ) : null}
-      <div className={cn("md:pl-[248px] motion-safe:transition-[padding] motion-safe:duration-[180ms]", collapsed && "md:pl-[72px]")}>
-        <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-3 border-b border-line bg-white px-4 sm:px-6">
-          <Button type="button" variant="outline" size="icon" className="md:hidden" onClick={() => setOpen(true)} aria-label="Open menu">
-            <Menu className="h-4 w-4" />
-          </Button>
-          <p className="hidden text-sm text-muted lg:block">Internal research operating system</p>
-          <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-3">
-            <Link href="/activity" className="hidden text-sm text-muted transition-colors duration-[180ms] hover:text-ink sm:inline">Activity</Link>
-            <div className="min-w-0 text-right">
-              <p className="truncate text-sm font-medium leading-4">{user.name}</p>
-              <p className="truncate text-xs text-muted">{user.roleName}</p>
-            </div>
-            <form action={logoutAction}>
-              <Button type="submit" variant="outline" size="sm">Log out</Button>
-            </form>
-          </div>
-        </header>
-        <main id="main" className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-6 xl:px-8">{children}</main>
+      </aside>
+      <div className="shell-main">
+        <div className="shell-top">
+          <OrgMenu user={user} logoutAction={logoutAction} />
+        </div>
+        <main id="main">{children}</main>
+        <nav className="bottombar" aria-label="Primary">
+          {flat.map((entry) => {
+            const Icon = entry.icon;
+            const active = current(entry.href);
+            return (
+              <Link key={entry.href} href={entry.href} aria-current={active ? "page" : undefined} title={entry.label}>
+                <Icon className="h-4 w-4 shrink-0" aria-hidden />
+                <span className="bottom-label">{entry.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
       </div>
     </div>
   );

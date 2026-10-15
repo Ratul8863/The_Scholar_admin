@@ -12,7 +12,7 @@ export function Input({ className, type, ...props }: React.ComponentProps<"input
 export function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
   return (
     <textarea
-      className={cn(controlClass, "h-auto min-h-28 rounded-[16px] py-3", className)}
+      className={cn(controlClass, "audit-area h-auto min-h-28", className)}
       {...props}
     />
   );

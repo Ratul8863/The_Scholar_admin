@@ -22,47 +22,47 @@ export default async function DashboardPage() {
   return (
     <div>
       <PageHeader eyebrow="Today" title="Operating picture" description="Counts, deadlines, and recent changes come from the database. Empty numbers mean the team has not entered that research yet." />
-      <section className="board" aria-label="Counts">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
-          {metrics.map(([label, value]) => (
-            <MetricCard key={String(label)} label={String(label)} value={value} />
-          ))}
-        </div>
+      <section className="overview-stats" aria-label="Counts">
+        {metrics.map(([label, value]) => (
+          <MetricCard key={String(label)} label={String(label)} value={value} />
+        ))}
       </section>
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+      <div className="overview-mid">
         <SummaryCard title="Deadlines">
-          <dl className="grid grid-cols-2 gap-3 text-sm">
-            <div><dt className="text-muted">Next 5 days</dt><dd className="num text-lg">{data.buckets.next5}</dd></div>
-            <div><dt className="text-muted">Next 7 days</dt><dd className="num text-lg">{data.buckets.next7}</dd></div>
-            <div><dt className="text-muted">Next 30 days</dt><dd className="num text-lg">{data.buckets.next30}</dd></div>
-            <div><dt className="text-muted">Next 60 days</dt><dd className="num text-lg">{data.buckets.next60}</dd></div>
+          <dl className="grid grid-cols-2 gap-4">
+            <div><dt className="type-14">Next 5 days</dt><dd className="type-32 num">{data.buckets.next5}</dd></div>
+            <div><dt className="type-14">Next 7 days</dt><dd className="type-32 num">{data.buckets.next7}</dd></div>
+            <div><dt className="type-14">Next 30 days</dt><dd className="type-32 num">{data.buckets.next30}</dd></div>
+            <div><dt className="type-14">Next 60 days</dt><dd className="type-32 num">{data.buckets.next60}</dd></div>
           </dl>
-          <Link className="mt-3 inline-block text-sm font-medium text-primary transition-colors duration-[180ms] hover:text-primary-dark" href="/deadlines">Open deadline intelligence</Link>
+          <Link className="open-pill mt-4" href="/deadlines">Open deadline intelligence</Link>
         </SummaryCard>
         <SummaryCard title="Content workflow">
-          <ul className="space-y-1 text-sm">
-            {Object.keys(data.contentCounts).length === 0 ? <li className="text-muted">No content records yet.</li> : null}
+          <ul className="sheet-list">
+            {Object.keys(data.contentCounts).length === 0 ? <li className="type-16 text-muted">No content records yet.</li> : null}
             {Object.entries(data.contentCounts).map(([status, count]) => (
-              <li key={status} className="flex justify-between"><span>{titleCaseStatus(status)}</span><span className="num">{count}</span></li>
+              <li key={status}><span className="type-16">{titleCaseStatus(status)}</span><span className="type-32 num">{count}</span></li>
             ))}
           </ul>
         </SummaryCard>
+      </div>
+      <div className="overview-lower">
         <SummaryCard title="Recent activity">
-          <ul className="space-y-2 text-sm">
-            {data.activity.length === 0 ? <li className="text-muted">Changes will appear here after the team starts working.</li> : null}
+          <ul className="sheet-list">
+            {data.activity.length === 0 ? <li className="type-16 text-muted">Changes will appear here after the team starts working.</li> : null}
             {data.activity.map((item) => (
-              <li key={String(item.id)} className="flex justify-between gap-3">
-                <span>{titleCaseStatus(String(item.action))} {String(item.entityType)}</span>
-                <time className="text-muted">{item.timestamp ? new Date(String(item.timestamp)).toLocaleString() : ""}</time>
+              <li key={String(item.id)}>
+                <span className="type-16">{titleCaseStatus(String(item.action))} {String(item.entityType)}</span>
+                <time className="type-date">{item.timestamp ? new Date(String(item.timestamp)).toLocaleString() : ""}</time>
               </li>
             ))}
           </ul>
         </SummaryCard>
         <SummaryCard title="Assignment load">
-          <ul className="space-y-2 text-sm">
-            {data.workload.length === 0 ? <li className="text-muted">No active assignments.</li> : null}
+          <ul className="sheet-list">
+            {data.workload.length === 0 ? <li className="type-16 text-muted">No active assignments.</li> : null}
             {data.workload.map((item) => (
-              <li key={item.userId} className="flex justify-between"><span>{users.get(item.userId)?.name ?? "Team member"}</span><span className="num">{item.count}</span></li>
+              <li key={item.userId}><span className="type-16">{users.get(item.userId)?.name ?? "Team member"}</span><span className="type-32 num">{item.count}</span></li>
             ))}
           </ul>
         </SummaryCard>

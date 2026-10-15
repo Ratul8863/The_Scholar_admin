@@ -1,20 +1,13 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { interactiveCard, panelClass } from "@/components/ui/styles";
-
-const shells = {
-  compact: "rounded-[12px] border border-line bg-white shadow-[var(--shadow-soft)]",
-  standard: panelClass,
-  feature: "rounded-[20px] border border-line bg-white shadow-[var(--shadow-soft)]",
-} as const;
 
 export function MetricCard({ label, value, hint }: { label: string; value: React.ReactNode; hint?: string }) {
   return (
-    <article className={cn(shells.compact, "px-4 py-3")}>
-      <p className="text-xs font-medium text-muted">{label}</p>
-      <p className="num mt-1 text-[1.75rem] font-medium leading-none tracking-tight text-ink">{value}</p>
-      {hint ? <p className="mt-2 text-xs text-muted">{hint}</p> : null}
+    <article className="stat-card">
+      <p className="type-14">{label}</p>
+      <p className="type-32 num">{value}</p>
+      {hint ? <p className="type-14">{hint}</p> : null}
     </article>
   );
 }
@@ -31,14 +24,14 @@ export function SummaryCard({
   className?: string;
 }) {
   return (
-    <section className={cn(shells.feature, className)}>
+    <section className={cn("warm-panel", className)}>
       {title ? (
-        <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-4">
-          <h2 className="text-lg font-normal tracking-tight text-ink sm:text-xl">{title}</h2>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="section-title">{title}</h2>
           {action}
         </div>
       ) : null}
-      <div className="min-w-0 p-5 text-sm [overflow-wrap:anywhere]">{children}</div>
+      <div className="warm-sheet min-w-0 [overflow-wrap:anywhere]">{children}</div>
     </section>
   );
 }
@@ -55,14 +48,14 @@ export function ContentCard({
   className?: string;
 }) {
   return (
-    <section className={cn(shells.standard, className)}>
+    <section className={cn("warm-sheet", className)}>
       {title ? (
-        <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3 sm:px-5">
-          <h2 className="text-lg font-normal tracking-tight text-ink">{title}</h2>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="section-title">{title}</h2>
           {action}
         </div>
       ) : null}
-      <div className="min-w-0 p-4 [overflow-wrap:anywhere] sm:p-5">{children}</div>
+      <div className="min-w-0 [overflow-wrap:anywhere]">{children}</div>
     </section>
   );
 }
@@ -81,15 +74,15 @@ export function NavigationCard({
   meta?: React.ReactNode;
 }) {
   return (
-    <Link href={href} className={cn(shells.standard, interactiveCard, "group flex items-start justify-between gap-3 p-4 sm:p-5")}>
+    <Link href={href} className="action-card">
       <span className="min-w-0">
-        {eyebrow ? <span className="block text-xs font-medium text-muted">{eyebrow}</span> : null}
-        <h2 className="text-lg font-normal tracking-tight text-ink transition-colors duration-[180ms] group-hover:text-primary">{title}</h2>
-        {description ? <span className="mt-1 block text-sm leading-6 text-muted">{description}</span> : null}
-        {meta ? <span className="num mt-2 block text-sm text-muted">{meta}</span> : null}
+        {eyebrow ? <span className="type-14">{eyebrow}</span> : null}
+        <h2 className="type-18">{title}</h2>
+        {description ? <span className="type-16 mt-1 block text-muted">{description}</span> : null}
+        {meta ? <span className="type-14 num mt-2 block">{meta}</span> : null}
       </span>
-      <span className="press-mark mt-0.5" aria-hidden>
-        <ChevronRight className="h-4 w-4 motion-safe:transition-transform motion-safe:duration-[180ms] motion-safe:group-hover:translate-x-1" />
+      <span className="icon-circle-ink" aria-hidden>
+        <ChevronRight className="nav-arrow h-4 w-4" />
       </span>
     </Link>
   );
@@ -108,30 +101,27 @@ export function RecordCard({
 }) {
   const body = (
     <>
-      <span className="flex items-start justify-between gap-3">
+      <span className="flex min-w-0 flex-1 items-start justify-between gap-3">
         <span className="min-w-0">
-          <span className="block font-medium text-ink transition-colors duration-[180ms] group-hover:text-primary">{title}</span>
-          {meta ? <span className="mt-0.5 block text-sm text-muted">{meta}</span> : null}
+          <span className="type-18 block">{title}</span>
+          {meta ? <span className="type-14 mt-1 block">{meta}</span> : null}
         </span>
-        {href ? (
-          <span className="press-mark" aria-hidden>
-            <ChevronRight className="h-4 w-4 motion-safe:transition-transform motion-safe:duration-[180ms] motion-safe:group-hover:translate-x-1" />
-          </span>
-        ) : null}
       </span>
-      {children ? <div className="mt-2 text-sm">{children}</div> : null}
+      {href ? (
+        <span className="icon-circle-ink" aria-hidden>
+          <ChevronRight className="nav-arrow h-4 w-4" />
+        </span>
+      ) : null}
+      {children ? <div className="type-16 mt-3 w-full">{children}</div> : null}
     </>
   );
-  if (!href) return <article className={cn(shells.compact, "p-4")}>{body}</article>;
-  return <Link href={href} className={cn(shells.compact, interactiveCard, "group block p-4")}>{body}</Link>;
+  if (!href) return <article className="warm-sheet">{body}</article>;
+  return (
+    <Link href={href} className="action-card flex-wrap">
+      {body}
+    </Link>
+  );
 }
-
-const alertTones = {
-  neutral: "border-line bg-white text-ink",
-  info: "border-info/20 bg-info-soft text-ink",
-  warning: "border-warning/30 bg-warning-soft text-ink",
-  danger: "border-danger/30 bg-danger-soft text-ink",
-} as const;
 
 export function AlertCard({
   tone = "warning",
@@ -140,22 +130,21 @@ export function AlertCard({
   action,
   href,
 }: {
-  tone?: keyof typeof alertTones;
+  tone?: "neutral" | "info" | "warning" | "danger";
   title: string;
   children?: React.ReactNode;
   action?: React.ReactNode;
   href?: string;
 }) {
-  const className = cn("rounded-[16px] border p-4 sm:p-5", alertTones[tone], href && interactiveCard, href && "group block");
   const body = (
     <>
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <h2 className={cn("text-lg font-normal tracking-tight", tone === "danger" ? "text-danger" : tone === "warning" ? "text-warning" : "text-ink")}>{title}</h2>
+        <h2 className={cn("section-title", tone === "danger" && "text-danger", tone === "warning" && "text-warning")}>{title}</h2>
         {action}
       </div>
-      {children ? <div className="mt-3 text-sm">{children}</div> : null}
+      {children ? <div className="type-16 mt-3">{children}</div> : null}
     </>
   );
-  if (href) return <Link href={href} className={className}>{body}</Link>;
-  return <section className={className}>{body}</section>;
+  if (href) return <Link href={href} className="alert-card is-pressable" data-tone={tone}>{body}</Link>;
+  return <section className="alert-card" data-tone={tone}>{body}</section>;
 }
