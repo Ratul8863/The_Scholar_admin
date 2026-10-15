@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { loginAction } from "@/server/actions/mutations";
+import { Check } from "lucide-react";
+import { loginAction } from "@/server/actions/session";
 import { ScholarLogo } from "@/components/brand/scholar-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,11 +35,22 @@ export default function LoginPage() {
     <main className="grid min-h-screen place-items-center bg-canvas px-4 py-10">
       <div className="w-full max-w-md rounded-[20px] border border-line bg-white p-6 shadow-[var(--shadow-soft)] sm:p-8">
         <ScholarLogo className="mb-5 w-44" />
-        <h1 className="text-[1.75rem] font-semibold tracking-tight">Sign in</h1>
+        <h1 className="text-[1.75rem] font-normal tracking-tight text-primary">Sign in</h1>
         <p className="mt-1 text-sm text-muted">Invitation-only access for the research team. There is no public registration.</p>
         <form action={action} className="mt-6 space-y-3">
           <label className="grid gap-1.5 text-sm font-medium">Email<Input name="email" type="email" autoComplete="username" required /></label>
           <div className="grid gap-1.5 text-sm font-medium"><label htmlFor="password">Password</label><PasswordField /></div>
+          <label className="flex w-fit cursor-pointer items-center gap-2 py-1 text-sm font-medium text-ink">
+            <span className="grid h-[18px] w-[18px] place-items-center">
+              <input
+                type="checkbox"
+                name="remember"
+                className="peer col-start-1 row-start-1 h-[18px] w-[18px] cursor-pointer appearance-none rounded-[5px] border border-line-strong bg-white transition-colors duration-[180ms] checked:border-primary checked:bg-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              />
+              <Check className="pointer-events-none col-start-1 row-start-1 h-3 w-3 text-white opacity-0 peer-checked:opacity-100" strokeWidth={3} />
+            </span>
+            Remember me
+          </label>
           {state?.message ? <p role="alert" className="text-sm text-danger">{state.message}</p> : null}
           <Button className="w-full" disabled={pending}>{pending ? "Signing in" : "Sign in"}</Button>
         </form>

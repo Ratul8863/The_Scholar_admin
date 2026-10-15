@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { isNextRedirect, runAction, type ActionResult } from "@/lib/errors";
-import { signIn, signOut } from "@/server/auth";
+import { runAction, type ActionResult } from "@/lib/errors";
+import { signIn } from "@/server/auth";
 import { assertPermission, getCurrentUser } from "@/server/auth/current-user";
 import { SavedView } from "@/models/platform";
 import { oid } from "@/server/services/query";
@@ -43,25 +43,6 @@ function recordPath(entityType: string, entityId: string) {
     content: `/content/${entityId}`,
   };
   return paths[entityType] ?? "/dashboard";
-}
-
-export async function loginAction(formData: FormData) {
-  try {
-    await signIn("credentials", {
-      email: String(formData.get("email") ?? ""),
-      password: String(formData.get("password") ?? ""),
-      redirectTo: "/dashboard",
-    });
-  } catch (error) {
-    if (isNextRedirect(error)) throw error;
-    const code = typeof error === "object" && error && "code" in error ? String((error as { code?: string }).code) : "";
-    if (code.includes("rate")) return { ok: false as const, message: "Too many attempts. Wait a few minutes and try again." };
-    return { ok: false as const, message: "Email or password is incorrect." };
-  }
-}
-
-export async function logoutAction() {
-  await signOut({ redirectTo: "/login" });
 }
 
 async function voidAction<T>(result: Promise<ActionResult<T>>) {

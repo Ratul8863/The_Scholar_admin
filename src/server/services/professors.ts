@@ -193,7 +193,7 @@ export async function listProfessors(query: ListQuery) {
   if (query.filters.university) filter.professorUniversityId = oid(query.filters.university);
   if (query.filters.department) filter.departmentId = oid(query.filters.department);
   if (query.filters.research) filter.researchStatus = query.filters.research;
-  const page = await paginate(professors, filter, query);
+  const page = await paginate(professors, filter, query, "name designation email researchAreas version");
   return { ...page, rows: page.rows.map((row) => asRecord(row)) };
 }
 

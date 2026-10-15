@@ -103,7 +103,7 @@ export async function listScholarships(query: ListQuery) {
   if (query.filters.publication) filter.publicationStatus = query.filters.publication;
   if (query.filters.funding) filter.fundingTypeIds = oid(query.filters.funding);
   if (query.filters.degree) filter.degreeLevelIds = oid(query.filters.degree);
-  const page = await paginate(model, filter, query);
+  const page = await paginate(model, filter, query, "name provider countryId researchStatus publicationStatus openingDate closingDate");
   const countries = await countryLookup(page.rows.map((row) => (row as { countryId?: unknown }).countryId));
   return {
     ...page,

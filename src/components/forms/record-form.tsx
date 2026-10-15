@@ -58,7 +58,7 @@ export function RecordForm({
     <form className="space-y-5" onSubmit={form.handleSubmit((values) => submit(values))}>
       {sections.map((section) => (
         <fieldset key={section} className={`${panelClass} p-4 sm:p-5`}>
-          <legend className="px-1 text-lg font-semibold tracking-tight">{section}</legend>
+          <legend className="px-1 text-lg font-normal tracking-tight">{section}</legend>
           <div className="mt-3 grid gap-4 sm:grid-cols-2">
             {fields.filter((field) => field.section === section).map((field) => {
               const fieldId = `field-${field.name}`;

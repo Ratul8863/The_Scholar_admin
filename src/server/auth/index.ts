@@ -1,8 +1,7 @@
 import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { compare } from "bcryptjs";
+import { AppError } from "@/lib/errors";
 import { connectDB } from "@/server/db/mongoose";
-import { Role, User } from "@/models";
 import { assertRateLimit } from "@/server/services/rate-limit";
 
 class InvalidLogin extends CredentialsSignin {
@@ -13,51 +12,73 @@ class RateLimitedLogin extends CredentialsSignin {
   code = "rate_limited";
 }
 
+class DatabaseUnavailable extends CredentialsSignin {
+  code = "database_unavailable";
+}
+
+const sessionMaxAge = 60 * 60 * 12;
+const rememberedMaxAge = 60 * 60 * 24 * 30;
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
   secret: process.env.AUTH_SECRET,
-  session: { strategy: "jwt", maxAge: 60 * 60 * 12 },
+  session: { strategy: "jwt", maxAge: rememberedMaxAge },
   pages: { signIn: "/login" },
   providers: [
     Credentials({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        remember: { label: "Remember me", type: "text" },
       },
       async authorize(credentials) {
         const email = String(credentials?.email ?? "").trim().toLowerCase();
-        const password = String(credentials?.password ?? "");
+        const password = String(credentials?.password ?? "").trim();
         if (!email || !password) throw new InvalidLogin();
         try {
           await assertRateLimit(`login:${email}`, 8, 15 * 60 * 1000);
-        } catch {
-          throw new RateLimitedLogin();
+        } catch (error) {
+          if (error instanceof AppError && error.code === "rate_limited") throw new RateLimitedLogin();
+          throw new DatabaseUnavailable();
         }
-        await connectDB();
-        const user = await User.findOne({ email }).select("+passwordHash");
-        if (!user?.active || !user.passwordHash) throw new InvalidLogin();
-        const matches = await compare(password, user.passwordHash);
-        if (!matches) throw new InvalidLogin();
-        const role = await Role.findById(user.roleId).lean();
-        return {
-          id: String(user._id),
-          email: user.email,
-          name: user.name,
-          sessionVersion: user.sessionVersion,
-          roleKey: role?.key ?? "",
-          permissions: role?.permissions ?? [],
-        };
+        try {
+          await connectDB();
+          const { compare } = await import("bcryptjs");
+          const { Role, User } = await import("@/models/identity");
+          const user = await User.findOne({ email }).select("+passwordHash");
+          if (!user?.active || !user.passwordHash) throw new InvalidLogin();
+          const matches = await compare(password, user.passwordHash);
+          if (!matches) throw new InvalidLogin();
+          const role = await Role.findById(user.roleId).select("key permissions").lean();
+          const remember = credentials?.remember === "true" || credentials?.remember === true;
+          return {
+            id: String(user._id),
+            email: user.email,
+            name: user.name,
+            sessionVersion: user.sessionVersion,
+            roleKey: role?.key ?? "",
+            permissions: role?.permissions ?? [],
+            remember,
+          };
+        } catch (error) {
+          if (error instanceof InvalidLogin) throw error;
+          throw new DatabaseUnavailable();
+        }
       },
     }),
   ],
   callbacks: {
     jwt({ token, user }) {
+      const now = Math.floor(Date.now() / 1000);
       if (user) {
         token.uid = user.id;
         token.sessionVersion = user.sessionVersion ?? 0;
         token.roleKey = user.roleKey ?? "";
         token.permissions = user.permissions ?? [];
+        token.remember = user.remember === true;
+        token.expiresAt = now + (token.remember ? rememberedMaxAge : sessionMaxAge);
       }
+      if (typeof token.expiresAt === "number" && now >= token.expiresAt) return null;
       return token;
     },
     session({ session, token }) {

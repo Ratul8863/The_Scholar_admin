@@ -22,11 +22,13 @@ export default async function DashboardPage() {
   return (
     <div>
       <PageHeader eyebrow="Today" title="Operating picture" description="Counts, deadlines, and recent changes come from the database. Empty numbers mean the team has not entered that research yet." />
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-        {metrics.map(([label, value]) => (
-          <MetricCard key={String(label)} label={String(label)} value={value} />
-        ))}
-      </div>
+      <section className="board" aria-label="Counts">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
+          {metrics.map(([label, value]) => (
+            <MetricCard key={String(label)} label={String(label)} value={value} />
+          ))}
+        </div>
+      </section>
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <SummaryCard title="Deadlines">
           <dl className="grid grid-cols-2 gap-3 text-sm">

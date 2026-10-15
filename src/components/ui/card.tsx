@@ -13,7 +13,7 @@ export function MetricCard({ label, value, hint }: { label: string; value: React
   return (
     <article className={cn(shells.compact, "px-4 py-3")}>
       <p className="text-xs font-medium text-muted">{label}</p>
-      <p className="num mt-1 text-[1.75rem] font-semibold leading-none tracking-tight text-ink">{value}</p>
+      <p className="num mt-1 text-[1.75rem] font-medium leading-none tracking-tight text-ink">{value}</p>
       {hint ? <p className="mt-2 text-xs text-muted">{hint}</p> : null}
     </article>
   );
@@ -34,7 +34,7 @@ export function SummaryCard({
     <section className={cn(shells.feature, className)}>
       {title ? (
         <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-4">
-          <h2 className="text-lg font-semibold tracking-tight text-ink sm:text-xl">{title}</h2>
+          <h2 className="text-lg font-normal tracking-tight text-ink sm:text-xl">{title}</h2>
           {action}
         </div>
       ) : null}
@@ -58,7 +58,7 @@ export function ContentCard({
     <section className={cn(shells.standard, className)}>
       {title ? (
         <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3 sm:px-5">
-          <h2 className="text-lg font-semibold tracking-tight text-ink">{title}</h2>
+          <h2 className="text-lg font-normal tracking-tight text-ink">{title}</h2>
           {action}
         </div>
       ) : null}
@@ -84,11 +84,13 @@ export function NavigationCard({
     <Link href={href} className={cn(shells.standard, interactiveCard, "group flex items-start justify-between gap-3 p-4 sm:p-5")}>
       <span className="min-w-0">
         {eyebrow ? <span className="block text-xs font-medium text-muted">{eyebrow}</span> : null}
-        <h2 className="text-lg font-semibold tracking-tight text-ink transition-colors duration-[180ms] group-hover:text-primary">{title}</h2>
+        <h2 className="text-lg font-normal tracking-tight text-ink transition-colors duration-[180ms] group-hover:text-primary">{title}</h2>
         {description ? <span className="mt-1 block text-sm leading-6 text-muted">{description}</span> : null}
         {meta ? <span className="num mt-2 block text-sm text-muted">{meta}</span> : null}
       </span>
-      <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted transition-colors duration-[180ms] group-hover:text-primary" aria-hidden />
+      <span className="press-mark mt-0.5" aria-hidden>
+        <ChevronRight className="h-4 w-4 motion-safe:transition-transform motion-safe:duration-[180ms] motion-safe:group-hover:translate-x-1" />
+      </span>
     </Link>
   );
 }
@@ -111,7 +113,11 @@ export function RecordCard({
           <span className="block font-medium text-ink transition-colors duration-[180ms] group-hover:text-primary">{title}</span>
           {meta ? <span className="mt-0.5 block text-sm text-muted">{meta}</span> : null}
         </span>
-        {href ? <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-muted transition-colors duration-[180ms] group-hover:text-primary" aria-hidden /> : null}
+        {href ? (
+          <span className="press-mark" aria-hidden>
+            <ChevronRight className="h-4 w-4 motion-safe:transition-transform motion-safe:duration-[180ms] motion-safe:group-hover:translate-x-1" />
+          </span>
+        ) : null}
       </span>
       {children ? <div className="mt-2 text-sm">{children}</div> : null}
     </>
@@ -144,7 +150,7 @@ export function AlertCard({
   const body = (
     <>
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <h2 className={cn("text-lg font-semibold tracking-tight", tone === "danger" ? "text-danger" : tone === "warning" ? "text-warning" : "text-ink")}>{title}</h2>
+        <h2 className={cn("text-lg font-normal tracking-tight", tone === "danger" ? "text-danger" : tone === "warning" ? "text-warning" : "text-ink")}>{title}</h2>
         {action}
       </div>
       {children ? <div className="mt-3 text-sm">{children}</div> : null}

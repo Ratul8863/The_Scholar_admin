@@ -7,7 +7,16 @@ import { deadlineState } from "@/server/domain/deadlines";
 import { ready } from "@/server/services/query";
 import { getSettings } from "@/server/services/settings";
 
+let dashboardCache: { expires: number; value: Awaited<ReturnType<typeof computeDashboard>> } | null = null;
+
 export async function dashboardData() {
+  if (dashboardCache && dashboardCache.expires > Date.now()) return dashboardCache.value;
+  const value = await computeDashboard();
+  dashboardCache = { expires: Date.now() + 15_000, value };
+  return value;
+}
+
+async function computeDashboard() {
   await ready();
   const settings = await getSettings();
   const now = new Date();
@@ -25,6 +34,7 @@ export async function dashboardData() {
     contentCounts,
     deadlines,
     assignments,
+    work,
   ] = await Promise.all([
     Scholarship.countDocuments({ archivedAt: null }),
     University.countDocuments({ archivedAt: null }),
@@ -37,8 +47,14 @@ export async function dashboardData() {
     EmergencyUpdate.countDocuments({ archivedAt: null, urgency: "emergency" }),
     ActivityLog.find().sort({ timestamp: -1 }).limit(8).lean(),
     Content.aggregate([{ $match: { archivedAt: null } }, { $group: { _id: "$contentStatus", count: { $sum: 1 } } }]),
-    Deadline.find({ archivedAt: null, closingDate: { $ne: null } }).select("closingDate timezone").lean(),
+    Deadline.find({
+      archivedAt: null,
+      closingDate: { $gte: now, $lte: new Date(now.getTime() + 62 * 86_400_000) },
+    })
+      .select("closingDate timezone")
+      .lean(),
     Assignment.aggregate([{ $match: { status: "active" } }, { $group: { _id: "$userId", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 5 }]),
+    DailyWorkEntry.countDocuments({ workDate: now.toISOString().slice(0, 10) }),
   ]);
   const buckets = { next5: 0, next7: 0, next30: 0, next60: 0 };
   for (const deadline of deadlines) {
@@ -50,7 +66,6 @@ export async function dashboardData() {
     if (days <= 30) buckets.next30 += 1;
     if (days <= 60) buckets.next60 += 1;
   }
-  const work = await DailyWorkEntry.countDocuments({ workDate: now.toISOString().slice(0, 10) });
   return {
     metrics: { scholarships, universities, professors, countries, opportunities, content, published, readyToPublish, emergencies, work },
     buckets,

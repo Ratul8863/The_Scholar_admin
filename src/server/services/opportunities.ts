@@ -21,7 +21,7 @@ export async function listOpportunities(type: string, query: ListQuery) {
   const filter: Record<string, unknown> = { type, archivedAt: null, ...searchClause(query, ["name", "organization"]) };
   if (query.filters.country) filter.countryId = oid(query.filters.country);
   if (query.filters.research) filter.researchStatus = query.filters.research;
-  const page = await paginate(opportunities, filter, query);
+  const page = await paginate(opportunities, filter, query, "name organization countryId");
   const countries = await countryLookup(page.rows.map((row) => (row as { countryId?: unknown }).countryId));
   return {
     ...page,

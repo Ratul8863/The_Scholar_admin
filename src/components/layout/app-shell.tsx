@@ -11,6 +11,8 @@ import {
   CalendarClock,
   GraduationCap,
   LayoutDashboard,
+  ChevronsLeft,
+  ChevronsRight,
   Menu,
   NotebookPen,
   Settings,
@@ -74,29 +76,29 @@ export function AppShell({
     .filter((group) => group.entries.length);
 
   const nav = (compact: boolean, onClose?: () => void) => (
-    <nav className="flex h-full flex-col" aria-label="Primary">
-      <div className="flex items-start">
+    <nav className={cn("flex min-h-full flex-col gap-4 py-3", compact ? "px-2" : "px-3")} aria-label="Primary">
+      <div className="flex items-center gap-2">
         <Link
           href="/dashboard"
           aria-label="The Scholar"
           className={cn(
             "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white",
-            compact ? "mx-2 my-3 flex h-11 w-[calc(100%-1rem)] items-center justify-center rounded-xl bg-white px-1 py-1" : "mx-3 my-3 block min-w-0 flex-1 rounded-2xl bg-white px-3 py-2.5",
+            compact ? "grid h-11 w-11 place-items-center overflow-hidden rounded-full bg-white" : "block min-w-0 flex-1 rounded-full bg-white px-3 py-2",
           )}
         >
-          <ScholarLogo variant={compact ? "mark" : "lockup"} alt="" className={compact ? "h-6 w-auto max-w-full" : "max-w-[188px]"} />
+          <ScholarLogo variant={compact ? "mark" : "lockup"} alt="" className={compact ? "h-6 w-auto max-w-9" : "max-w-full"} />
         </Link>
         {onClose ? (
-          <button type="button" className="mr-2 mt-3 grid h-11 w-11 shrink-0 place-items-center rounded-full text-sidebar-text transition-colors duration-[180ms] hover:bg-white/[0.08] hover:text-white" onClick={onClose} aria-label="Close">
+          <button type="button" className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-sidebar-text transition-colors duration-[180ms] hover:bg-sidebar-hover hover:text-white" onClick={onClose} aria-label="Close">
             <X className="h-4 w-4" />
           </button>
         ) : null}
       </div>
-      <div className="flex-1 space-y-4 overflow-y-auto px-2 pb-4">
+      <div className="flex flex-1 flex-col gap-4">
         {visible.map((group) => (
           <div key={group.label || "home"}>
-            {group.label && !compact ? <p className="px-2 pb-1 text-[11px] font-medium uppercase tracking-[0.14em] text-sidebar-muted">{group.label}</p> : null}
-            <ul className="space-y-0.5">
+            {group.label && !compact ? <p className="px-3 pb-1 text-[11px] font-medium uppercase tracking-[0.14em] text-sidebar-muted">{group.label}</p> : null}
+            <ul className="space-y-1">
               {group.entries.map((entry) => {
                 const active = pathname === entry.href || (entry.href !== "/dashboard" && pathname.startsWith(entry.href));
                 const Icon = entry.icon;
@@ -107,12 +109,13 @@ export function AppShell({
                       title={entry.label}
                       onClick={() => setOpen(false)}
                       className={cn(
-                        "group flex min-h-10 items-center gap-2 rounded-xl px-2.5 py-2 text-sm text-sidebar-text transition-colors duration-[180ms]",
-                        active ? "bg-white/[0.12] text-white" : "hover:bg-white/[0.08]",
+                        "group flex min-h-11 min-w-0 items-center gap-2 rounded-full px-3 text-sm text-sidebar-text transition-colors duration-[180ms]",
+                        compact && "justify-center px-0",
+                        active ? "bg-primary text-white" : "hover:bg-sidebar-hover hover:text-white",
                       )}
                     >
-                      <Icon className={cn("h-4 w-4 shrink-0 transition-colors duration-[180ms]", active ? "text-white" : "text-sidebar-muted group-hover:text-sidebar-text")} />
-                      {compact ? <span className="sr-only">{entry.label}</span> : entry.label}
+                      <Icon className={cn("h-4 w-4 shrink-0 transition-colors duration-[180ms]", active ? "text-white" : "text-sidebar-muted group-hover:text-white")} />
+                      {compact ? <span className="sr-only">{entry.label}</span> : <span className="truncate">{entry.label}</span>}
                     </Link>
                   </li>
                 );
@@ -121,8 +124,8 @@ export function AppShell({
           </div>
         ))}
       </div>
-      <button type="button" className="m-2 hidden min-h-10 rounded-xl px-2 py-2 text-left text-xs text-sidebar-muted transition-colors duration-[180ms] hover:bg-white/[0.08] hover:text-sidebar-text md:block" onClick={() => setCollapsed((value) => !value)}>
-        {compact ? "Expand" : "Collapse sidebar"}
+      <button type="button" className={cn("hidden min-h-11 w-full items-center gap-2 rounded-full px-3 text-left text-xs text-sidebar-muted transition-colors duration-[180ms] hover:bg-sidebar-hover hover:text-white md:flex", compact && "justify-center px-0")} aria-label={compact ? "Expand sidebar" : "Collapse sidebar"} onClick={() => setCollapsed((value) => !value)}>
+        {compact ? <ChevronsRight className="h-4 w-4" /> : <><ChevronsLeft className="h-4 w-4 shrink-0" /><span className="truncate">Collapse sidebar</span></>}
       </button>
     </nav>
   );
@@ -130,15 +133,15 @@ export function AppShell({
   return (
     <div className="min-h-screen overflow-x-clip bg-canvas text-ink">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded-full focus:bg-white focus:px-3 focus:py-2">Skip to content</a>
-      <aside className={cn("fixed inset-y-0 left-0 z-30 hidden border-r border-white/5 bg-sidebar motion-safe:transition-[width] motion-safe:duration-[180ms] md:block", collapsed ? "w-[72px]" : "w-[248px]")}>{nav(collapsed)}</aside>
+      <aside className={cn("fixed inset-y-0 left-0 z-30 hidden overflow-x-hidden overflow-y-auto border-r border-sidebar-line bg-sidebar motion-safe:transition-[width] motion-safe:duration-[180ms] md:block", collapsed ? "w-[72px]" : "w-[248px]")}>{nav(collapsed)}</aside>
       {open ? (
         <div className="fixed inset-0 z-40 md:hidden">
           <button className="absolute inset-0 bg-ink/40" aria-label="Close menu" onClick={() => setOpen(false)} />
-          <div className="relative h-full w-[min(100%,280px)] bg-sidebar">{nav(false, () => setOpen(false))}</div>
+          <div className="relative h-full w-[min(100%,280px)] overflow-x-hidden overflow-y-auto bg-sidebar">{nav(false, () => setOpen(false))}</div>
         </div>
       ) : null}
       <div className={cn("md:pl-[248px] motion-safe:transition-[padding] motion-safe:duration-[180ms]", collapsed && "md:pl-[72px]")}>
-        <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-3 border-b border-line bg-white px-3 sm:px-5">
+        <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-3 border-b border-line bg-white px-4 sm:px-6">
           <Button type="button" variant="outline" size="icon" className="md:hidden" onClick={() => setOpen(true)} aria-label="Open menu">
             <Menu className="h-4 w-4" />
           </Button>
@@ -154,7 +157,7 @@ export function AppShell({
             </form>
           </div>
         </header>
-        <main id="main" className="mx-auto w-full max-w-[1440px] px-3 py-5 sm:px-5 lg:px-6">{children}</main>
+        <main id="main" className="mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-6 xl:px-8">{children}</main>
       </div>
     </div>
   );

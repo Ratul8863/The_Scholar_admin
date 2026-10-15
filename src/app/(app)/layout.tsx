@@ -1,5 +1,5 @@
 import { AppShell } from "@/components/layout/app-shell";
-import { logoutAction } from "@/server/actions/mutations";
+import { logoutAction } from "@/server/actions/session";
 import { getCurrentUser } from "@/server/auth/current-user";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {

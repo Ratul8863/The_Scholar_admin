@@ -8,10 +8,11 @@
   --line: #e3e8f1;
   --line-strong: #c5d0e3;
   --primary: #2b4fc4;
-  --primary-hover: #3d63d6;
+  --primary-hover: color-mix(in oklab, var(--primary) 82%, white);
   --primary-dark: #1f3d9e;
   --primary-soft: #e8eefb;
   --teal: #0f766e;
+  --teal-hover: color-mix(in oklab, var(--teal) 82%, white);
   --teal-soft: #e7f4f2;
   --success: #157a45;
   --success-soft: #e7f6ee;
@@ -25,7 +26,12 @@
   --sidebar: #132033;
   --sidebar-text: #d5deea;
   --sidebar-muted: #8ea0b8;
+  --sidebar-hover: #1d334f;
+  --sidebar-line: #24364d;
   --sidebar-width: 248px;
+  --board: #e7edf6;
+  --card-hover: #f3f6fc;
+  --chip: #f4f6fb;
   --topbar-height: 56px;
   --shadow-soft: 0 1px 2px rgba(19, 32, 51, 0.05);
   --shadow-lift: 0 8px 18px rgba(19, 32, 51, 0.06);
@@ -61,6 +67,12 @@
   --color-sidebar: var(--sidebar);
   --color-sidebar-text: var(--sidebar-text);
   --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-hover: var(--sidebar-hover);
+  --color-sidebar-line: var(--sidebar-line);
+  --color-board: var(--board);
+  --color-card-hover: var(--card-hover);
+  --color-chip: var(--chip);
+  --color-teal-hover: var(--teal-hover);
   --color-row-hover: var(--row-hover);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -160,7 +172,7 @@ input[type="radio"] {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  height: 2.25rem;
+  height: 2.75rem;
   flex: none;
   border-radius: 999px;
   border: 1px solid var(--line);
@@ -173,8 +185,46 @@ input[type="radio"] {
 }
 
 .filter-chip:hover {
-  background: #f4f6fb;
+  background: var(--chip);
   border-color: var(--line-strong);
+}
+
+.board {
+  border-radius: var(--radius-feature);
+  background: var(--board);
+  padding: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .board {
+    padding: 1rem;
+  }
+}
+
+.press-mark {
+  display: grid;
+  height: 2rem;
+  width: 2rem;
+  flex: none;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--canvas);
+  color: var(--muted);
+  transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.group:hover .press-mark {
+  background: var(--primary);
+  color: white;
+  transform: scale(1.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .press-mark,
+  .group:hover .press-mark {
+    transition: none;
+    transform: none;
+  }
 }
 
 .filter-chip[data-active="true"] {
@@ -189,8 +239,8 @@ input[type="radio"] {
 }
 
 .filter-chip.compact {
-  height: 2rem;
-  padding: 0 0.7rem;
+  height: 2.75rem;
+  padding: 0 0.85rem;
   font-size: 0.75rem;
 }
 

@@ -14,6 +14,7 @@ declare module "next-auth" {
     sessionVersion?: number;
     roleKey?: string;
     permissions?: string[];
+    remember?: boolean;
   }
 }
 
@@ -23,5 +24,7 @@ declare module "@auth/core/jwt" {
     sessionVersion?: number;
     roleKey?: string;
     permissions?: string[];
+    remember?: boolean;
+    expiresAt?: number;
   }
 }

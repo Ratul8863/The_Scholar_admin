@@ -5,7 +5,7 @@ import { Assignment } from "@/models/platform";
 import { AppError } from "@/lib/errors";
 import { asRecord } from "@/lib/serialize";
 import { getEnv } from "@/config/env";
-import type { CurrentUser } from "@/server/auth/current-user";
+import { forgetCachedUsers, type CurrentUser } from "@/server/auth/current-user";
 import { assessInvitation, createRawToken, hashToken } from "@/server/domain/invitations";
 import { passwordIssues } from "@/server/domain/text";
 import { sendEmail } from "@/server/notifications/email";
@@ -78,6 +78,7 @@ export async function setUserActive(actor: CurrentUser, id: string, active: bool
   user.active = active;
   user.sessionVersion += 1;
   await user.save();
+  forgetCachedUsers();
   await writeAudit({ actorUserId: actor.id, action: "edit", entityType: "user", entityId: id, changes: [{ field: "active", oldValue: !active, newValue: active }] });
 }
 
@@ -85,6 +86,7 @@ export async function changeUserRole(actor: CurrentUser, id: string, roleId: str
   const role = await Role.findById(oid(roleId)).lean();
   if (!role) throw new AppError("validation", "Choose a role.");
   await User.updateOne({ _id: oid(id) }, { $set: { roleId: role._id }, $inc: { sessionVersion: 1 } });
+  forgetCachedUsers();
   await writeAudit({ actorUserId: actor.id, action: "edit", entityType: "user", entityId: id, changes: [{ field: "role", oldValue: null, newValue: role.key }] });
 }
 

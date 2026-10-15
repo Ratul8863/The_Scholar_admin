@@ -1,5 +1,4 @@
 import "server-only";
-import { connection } from "next/server";
 import mongoose, { type Model } from "mongoose";
 import { AppError } from "@/lib/errors";
 import { escapeRegex } from "@/lib/utils";
@@ -11,7 +10,6 @@ import type { ListQuery } from "@/lib/query";
 export type DocModel = Model<mongoose.Document>;
 
 export async function ready() {
-  await connection();
   await connectDB();
 }
 
@@ -27,13 +25,12 @@ export function searchClause(query: ListQuery, fields: string[]) {
   return { $or: fields.map((field) => ({ [field]: pattern })) };
 }
 
-export async function paginate(model: DocModel, filter: Record<string, unknown>, query: ListQuery) {
+export async function paginate(model: DocModel, filter: Record<string, unknown>, query: ListQuery, select?: string) {
   const skip = (query.page - 1) * query.pageSize;
   const sort = { [query.sort]: query.dir === "asc" ? 1 : -1 } as Record<string, 1 | -1>;
-  const [rows, total] = await Promise.all([
-    model.find(filter).sort(sort).skip(skip).limit(query.pageSize).lean(),
-    model.countDocuments(filter),
-  ]);
+  const rowsQuery = model.find(filter).sort(sort).skip(skip).limit(query.pageSize);
+  if (select) rowsQuery.select(select);
+  const [rows, total] = await Promise.all([rowsQuery.lean(), model.countDocuments(filter)]);
   return {
     rows,
     total,

@@ -3,7 +3,7 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@/server/auth";
 import { connectDB } from "@/server/db/mongoose";
-import { Role, User } from "@/models";
+import { Role, User } from "@/models/identity";
 import { hasAnyPermission, hasPermission } from "@/server/permissions/catalog";
 import { AppError } from "@/lib/errors";
 
@@ -16,14 +16,28 @@ export type CurrentUser = {
   permissions: string[];
 };
 
+const userCache = new Map<string, { expires: number; value: CurrentUser }>();
+const USER_TTL_MS = 20_000;
+
+export function forgetCachedUsers() {
+  userCache.clear();
+}
+
 export const getCurrentUser = cache(async (): Promise<CurrentUser> => {
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
+  const key = `${session.user.id}:${session.user.sessionVersion}`;
+  const hit = userCache.get(key);
+  if (hit && hit.expires > Date.now()) return hit.value;
+
   await connectDB();
-  const user = await User.findById(session.user.id).lean();
-  if (!user?.active || user.sessionVersion !== session.user.sessionVersion) redirect("/login");
-  const role = await Role.findById(user.roleId).lean();
-  return {
+  const user = await User.findById(session.user.id).select("name email active sessionVersion roleId").lean();
+  if (!user?.active || user.sessionVersion !== session.user.sessionVersion) {
+    userCache.delete(key);
+    redirect("/login");
+  }
+  const role = await Role.findById(user.roleId).select("key name permissions").lean();
+  const current: CurrentUser = {
     id: String(user._id),
     name: user.name,
     email: user.email,
@@ -31,6 +45,8 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser> => {
     roleName: role?.name ?? "Member",
     permissions: role?.permissions ?? [],
   };
+  userCache.set(key, { expires: Date.now() + USER_TTL_MS, value: current });
+  return current;
 });
 
 export function assertPermission(user: CurrentUser, permission: string) {
