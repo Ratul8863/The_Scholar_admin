@@ -49,7 +49,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           if (!user?.active || !user.passwordHash) throw new InvalidLogin();
           const matches = await compare(password, user.passwordHash);
           if (!matches) throw new InvalidLogin();
-          const role = await Role.findById(user.roleId).select("key permissions").lean();
+          const role = await Role.findById(user.roleId).select("key name permissions").lean();
           const remember = credentials?.remember === "true" || credentials?.remember === true;
           return {
             id: String(user._id),
@@ -57,6 +57,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             name: user.name,
             sessionVersion: user.sessionVersion,
             roleKey: role?.key ?? "",
+            roleName: role?.name ?? "Member",
             permissions: role?.permissions ?? [],
             remember,
           };
@@ -74,6 +75,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.uid = user.id;
         token.sessionVersion = user.sessionVersion ?? 0;
         token.roleKey = user.roleKey ?? "";
+        token.roleName = user.roleName ?? "Member";
         token.permissions = user.permissions ?? [];
         token.remember = user.remember === true;
         token.expiresAt = now + (token.remember ? rememberedMaxAge : sessionMaxAge);
@@ -85,6 +87,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.user.id = String(token.uid ?? "");
       session.user.sessionVersion = Number(token.sessionVersion ?? 0);
       session.user.roleKey = String(token.roleKey ?? "");
+      session.user.roleName = String(token.roleName ?? "");
       session.user.permissions = Array.isArray(token.permissions) ? token.permissions.map(String) : [];
       return session;
     },

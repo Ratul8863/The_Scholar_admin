@@ -21,11 +21,9 @@ export async function verificationQueue() {
   await ready();
   const groups = await Promise.all(
     queues.map(async (queue) => {
-      const rows = await queue.model.find({ archivedAt: null, researchStatus: { $ne: "verified" } }).sort({ updatedAt: -1 }).limit(8).lean();
-      const emergencyRows = queue.entityType === "emergency"
-        ? await EmergencyUpdate.find({ archivedAt: null, verificationStatus: { $ne: "verified" } }).sort({ createdAt: -1 }).limit(8).lean()
-        : rows;
-      const source = queue.entityType === "emergency" ? emergencyRows : rows;
+      const source = queue.entityType === "emergency"
+        ? await EmergencyUpdate.find({ archivedAt: null, verificationStatus: { $ne: "verified" } }).sort({ createdAt: -1 }).limit(8).select("title createdAt").lean()
+        : await queue.model.find({ archivedAt: null, researchStatus: { $ne: "verified" } }).sort({ updatedAt: -1 }).limit(8).select("name title updatedAt").lean();
       return source.map((row) => ({
         id: String(row._id),
         entityType: queue.entityType,

@@ -18,6 +18,12 @@ export async function GET(request: Request) {
   if (required && !hasPermission(session.user.permissions ?? [], required)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-  const options = await searchLookups(kind, url.searchParams.get("q") ?? "", url.searchParams.get("id") ?? undefined);
-  return NextResponse.json({ options }, { headers: { "Cache-Control": "private, no-store" } });
+  const q = url.searchParams.get("q") ?? "";
+  const id = url.searchParams.get("id") ?? undefined;
+  const options = await searchLookups(kind, q, id);
+  const cacheable = kind === "country" && !id && q.trim().length === 0;
+  return NextResponse.json(
+    { options },
+    { headers: { "Cache-Control": cacheable ? "private, max-age=60, stale-while-revalidate=300" : "private, max-age=15, stale-while-revalidate=60" } },
+  );
 }

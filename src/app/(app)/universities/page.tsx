@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { countryCards, listUniversities } from "@/server/services/universities";
+import { countryCards } from "@/server/services/universities";
 import { listCountries } from "@/server/services/settings";
 import { can, getCurrentUser } from "@/server/auth/current-user";
 import { PageHeader, EmptyState } from "@/components/layout/page";
@@ -22,9 +22,4 @@ export default async function UniversitiesPage() {
       </div>
     </div>
   );
-}
-
-export async function UniversitySearchFallback() {
-  const data = await listUniversities({ q: "", page: 1, pageSize: 25, sort: "updatedAt", dir: "desc", filters: {} });
-  return data.rows;
 }

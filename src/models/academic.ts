@@ -76,6 +76,8 @@ const scholarshipSchema = new Schema(
   { timestamps: true },
 );
 scholarshipSchema.index({ countryId: 1, researchStatus: 1, archivedAt: 1 });
+scholarshipSchema.index({ archivedAt: 1, updatedAt: -1 });
+scholarshipSchema.index({ archivedAt: 1, name: 1 });
 scholarshipSchema.index({ normalizedName: 1, countryId: 1 });
 scholarshipSchema.index({ normalizedOfficialUrl: 1 });
 scholarshipSchema.index({ openingDate: 1 });
@@ -102,7 +104,9 @@ const universitySchema = new Schema(
   },
   { timestamps: true },
 );
-universitySchema.index({ countryId: 1, archivedAt: 1 });
+universitySchema.index({ countryId: 1, archivedAt: 1, name: 1 });
+universitySchema.index({ archivedAt: 1, updatedAt: -1 });
+universitySchema.index({ archivedAt: 1, countryId: 1 });
 universitySchema.index({ normalizedName: 1, countryId: 1 });
 universitySchema.index({ normalizedWebsite: 1 });
 universitySchema.index({ name: "text", city: "text" }, { default_language: "none", name: "university_text" });
@@ -135,7 +139,7 @@ const programSchema = new Schema(
   },
   { timestamps: true },
 );
-programSchema.index({ universityId: 1, archivedAt: 1 });
+programSchema.index({ universityId: 1, archivedAt: 1, name: 1 });
 
 const intakeSchema = new Schema(
   {

@@ -12,7 +12,8 @@ const countrySchema = new Schema(
   },
   { timestamps: true },
 );
-countrySchema.index({ active: 1, displayOrder: 1 });
+countrySchema.index({ active: 1, displayOrder: 1, name: 1 });
+countrySchema.index({ name: 1 });
 
 const namedSchema = new Schema(
   {

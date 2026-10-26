@@ -64,7 +64,7 @@ export default async function ScholarshipsPage({ searchParams }: { searchParams:
         </div>
         </>
       )}
-      <Pager page={data.page} pages={data.pages} path="/scholarships" query={{ q: query.q, country: query.filters.country, research: query.filters.research }} />
+      <Pager page={data.page} hasMore={data.hasMore} path="/scholarships" query={{ q: query.q, country: query.filters.country, research: query.filters.research }} />
     </div>
   );
 }

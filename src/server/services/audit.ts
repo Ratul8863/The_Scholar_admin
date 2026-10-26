@@ -34,11 +34,15 @@ export async function listActivity(filters: { entityType?: string; actorUserId?:
   if (filters.entityType) query.entityType = filters.entityType;
   if (filters.actorUserId) query.actorUserId = filters.actorUserId;
   const page = filters.page && filters.page > 0 ? filters.page : 1;
-  const [rows, total] = await Promise.all([
-    ActivityLog.find(query).sort({ timestamp: -1 }).skip((page - 1) * 40).limit(40).lean(),
-    ActivityLog.countDocuments(query),
-  ]);
-  return { rows, total, page, pages: Math.max(1, Math.ceil(total / 40)) };
+  const docs = await ActivityLog.find(query)
+    .sort({ timestamp: -1 })
+    .skip((page - 1) * 40)
+    .limit(41)
+    .select("actorUserId action entityType entityId changes timestamp")
+    .lean();
+  const hasMore = docs.length > 40;
+  const rows = hasMore ? docs.slice(0, 40) : docs;
+  return { rows, total: (page - 1) * 40 + rows.length + (hasMore ? 1 : 0), page, pages: Math.max(1, hasMore ? page + 1 : page), hasMore };
 }
 
 export function diffFields(before: Record<string, unknown>, after: Record<string, unknown>, fields: string[]) {

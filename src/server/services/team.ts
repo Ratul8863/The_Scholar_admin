@@ -17,9 +17,9 @@ import { withOptionalTransaction } from "@/server/db/mongoose";
 export async function teamOverview() {
   await ready();
   const [users, invitations, roles, workload] = await Promise.all([
-    User.find().sort({ name: 1 }).lean(),
-    Invitation.find().sort({ createdAt: -1 }).limit(50).lean(),
-    Role.find().lean(),
+    User.find().sort({ name: 1 }).select("name email active roleId sessionVersion createdAt").lean(),
+    Invitation.find().sort({ createdAt: -1 }).limit(50).select("email name roleId status expiresAt createdAt").lean(),
+    Role.find().select("key name description permissions system").lean(),
     Assignment.aggregate([{ $match: { status: "active" } }, { $group: { _id: "$userId", count: { $sum: 1 } } }]),
   ]);
   const roleName = new Map(roles.map((role) => [String(role._id), role.name]));

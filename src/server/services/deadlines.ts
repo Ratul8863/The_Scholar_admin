@@ -17,7 +17,7 @@ export async function listDeadlines(bucket: string) {
     const days = bucket === "5" ? 5 : bucket === "7" ? 7 : bucket === "60" ? 60 : 30;
     filter.closingDate = { $gte: now, $lte: new Date(now.getTime() + days * day) };
   }
-  const rows = await Deadline.find(filter).sort({ closingDate: 1, openingDate: 1 }).limit(100).lean();
+  const rows = await Deadline.find(filter).sort({ closingDate: 1, openingDate: 1 }).limit(100).select("entityType entityId deadlineType label openingDate closingDate timezone").lean();
   return rows.map((row) => ({
     ...asRecord(row),
     state: deadlineState({ openingDate: row.openingDate, closingDate: row.closingDate, timeZone: row.timezone, warningDays: settings.deadlineWarningDays }),

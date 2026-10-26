@@ -39,19 +39,33 @@ export function EmptyState({ title, body, action }: { title: string; body: strin
   );
 }
 
-export function Pager({ page, pages, path, query }: { page: number; pages: number; path: string; query: Record<string, string | undefined> }) {
+export function Pager({
+  page,
+  pages,
+  path,
+  query,
+  hasMore,
+}: {
+  page: number;
+  pages?: number;
+  path: string;
+  query: Record<string, string | undefined>;
+  hasMore?: boolean;
+}) {
   function href(next: number) {
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries(query)) if (value) params.set(key, value);
     params.set("page", String(next));
     return `${path}?${params.toString()}`;
   }
+  const showNext = hasMore === true || (hasMore !== false && pages != null && page < pages);
+  if (page <= 1 && !showNext) return null;
   return (
     <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
-      <span className="type-14 num">Page {page} of {pages}</span>
+      <span className="type-14 num">Page {page}{pages && hasMore === undefined ? ` of ${pages}` : ""}</span>
       <div className="flex gap-2">
         {page > 1 ? <Link className="nav-pill" href={href(page - 1)}>Previous</Link> : null}
-        {page < pages ? <Link className={cn("nav-pill")} href={href(page + 1)}>Next</Link> : null}
+        {showNext ? <Link className={cn("nav-pill")} href={href(page + 1)}>Next</Link> : null}
       </div>
     </div>
   );

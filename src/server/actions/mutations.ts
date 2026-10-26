@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { runAction, type ActionResult } from "@/lib/errors";
 import { signIn } from "@/server/auth";
-import { assertPermission, getCurrentUser } from "@/server/auth/current-user";
+import { cacheClear } from "@/server/cache";
+import { assertPermission, getCurrentUser, getVerifiedUser } from "@/server/auth/current-user";
 import { SavedView } from "@/models/platform";
 import { oid } from "@/server/services/query";
 import { addNote, addSource, assignUser } from "@/server/services/relations";
@@ -67,15 +68,21 @@ export async function acceptInviteAction(formData: FormData) {
 }
 
 async function gate(permission: string) {
-  const user = await getCurrentUser();
+  const user = await getVerifiedUser();
   assertPermission(user, permission);
   return user;
+}
+
+function afterWrite() {
+  cacheClear("dashboard");
+  cacheClear("cards");
 }
 
 export async function saveScholarshipAction(input: ScholarshipInput) {
   const result = await runAction(async () => {
     const user = await gate(input.version ? "scholarship.update" : "scholarship.create");
     const id = input.version ? await updateScholarship(user, String(input.id), input) : await createScholarship(user, input);
+    afterWrite();
     revalidatePath("/scholarships");
     return { id };
   });
@@ -86,6 +93,7 @@ export async function archiveScholarshipAction(id: string) {
   const result = await runAction(async () => {
     const user = await gate("record.archive");
     await archiveScholarship(user, id);
+    afterWrite();
     revalidatePath("/scholarships");
     return { id };
   });
@@ -96,6 +104,7 @@ export async function saveUniversityAction(input: Record<string, unknown>) {
   return runAction(async () => {
     const user = await gate(input.id ? "university.update" : "university.create");
     const id = input.id ? (await updateUniversity(user, String(input.id), input), String(input.id)) : await createUniversity(user, input);
+    afterWrite();
     revalidatePath("/universities");
     return { id };
   });
@@ -105,6 +114,7 @@ export async function archiveUniversityAction(id: string) {
   return runAction(async () => {
     const user = await gate("record.archive");
     await archiveUniversity(user, id);
+    afterWrite();
     revalidatePath("/universities");
     return { id };
   });
@@ -114,6 +124,7 @@ export async function saveProgramAction(input: Record<string, unknown>) {
   return runAction(async () => {
     const user = await gate("university.update");
     const id = await saveProgram(user, input);
+    afterWrite();
     revalidatePath("/universities");
     if (input.universityId) revalidatePath(`/universities/${input.universityId}`);
     return { id };
@@ -142,6 +153,7 @@ export async function saveProfessorUniversityAction(input: Record<string, unknow
   return runAction(async () => {
     const user = await gate("professor.create");
     const id = await createProfessorUniversity(user, input);
+    afterWrite();
     revalidatePath("/professors");
     return { id };
   });
@@ -151,6 +163,7 @@ export async function saveDepartmentAction(input: Record<string, unknown>) {
   return runAction(async () => {
     const user = await gate("professor.create");
     const id = await createDepartment(user, input);
+    afterWrite();
     if (input.professorUniversityId) revalidatePath(`/professors/universities/${input.professorUniversityId}`);
     return { id };
   });
@@ -160,6 +173,7 @@ export async function saveProfessorAction(input: Record<string, unknown>) {
   return runAction(async () => {
     const user = await gate(input.id ? "professor.update" : "professor.create");
     const id = input.id ? (await updateProfessor(user, String(input.id), input), String(input.id)) : await createProfessor(user, input);
+    afterWrite();
     revalidatePath("/professors/table");
     return { id };
   });
@@ -169,6 +183,7 @@ export async function archiveProfessorAction(id: string) {
   return runAction(async () => {
     const user = await gate("record.archive");
     await archiveProfessor(user, id);
+    afterWrite();
     return { id };
   });
 }
@@ -177,6 +192,7 @@ export async function bulkArchiveProfessorsAction(ids: string[]) {
   return runAction(async () => {
     const user = await gate("record.archive");
     await bulkProfessorAction(user, ids, "archive");
+    afterWrite();
     revalidatePath("/professors/table");
     return { id: "ok" };
   });
@@ -195,6 +211,7 @@ export async function saveOpportunityAction(input: Record<string, unknown>) {
   return runAction(async () => {
     const user = await gate(input.id ? "opportunity.update" : "opportunity.create");
     const id = await saveOpportunity(user, input);
+    afterWrite();
     revalidatePath("/opportunities");
     return { id };
   });
@@ -204,6 +221,7 @@ export async function archiveOpportunityAction(id: string) {
   return runAction(async () => {
     const user = await gate("record.archive");
     await archiveOpportunity(user, id);
+    afterWrite();
     return { id };
   });
 }
@@ -212,6 +230,7 @@ export async function saveEmergencyAction(input: Record<string, unknown>) {
   return runAction(async () => {
     const user = await gate(input.id ? "emergency.update" : "emergency.create");
     const id = await saveEmergency(user, input);
+    afterWrite();
     revalidatePath("/content");
     revalidatePath("/emergency");
     return { id };
@@ -222,6 +241,7 @@ export async function archiveEmergencyAction(id: string) {
   return runAction(async () => {
     const user = await gate("record.archive");
     await archiveEmergency(user, id);
+    afterWrite();
     return { id };
   });
 }
@@ -230,6 +250,7 @@ export async function saveContentAction(input: Record<string, unknown>) {
   return runAction(async () => {
     const user = await gate(input.id ? "content.update" : "content.create");
     const id = await saveContent(user, input);
+    afterWrite();
     revalidatePath("/content");
     return { id };
   });
@@ -239,6 +260,7 @@ export async function transitionContentAction(id: string, to: string, version: n
   return runAction(async () => {
     const user = await getCurrentUser();
     await transitionContent(user, id, to, version);
+    afterWrite();
     revalidatePath("/content");
     return { id };
   });

@@ -3,17 +3,13 @@ import { ActivityLog, Content, DailyWorkEntry, Deadline, EmergencyUpdate, Opport
 import { Country } from "@/models/reference";
 import { Assignment } from "@/models/platform";
 import { asRecord } from "@/lib/serialize";
+import { cacheLoad } from "@/server/cache";
 import { deadlineState } from "@/server/domain/deadlines";
 import { ready } from "@/server/services/query";
 import { getSettings } from "@/server/services/settings";
 
-let dashboardCache: { expires: number; value: Awaited<ReturnType<typeof computeDashboard>> } | null = null;
-
 export async function dashboardData() {
-  if (dashboardCache && dashboardCache.expires > Date.now()) return dashboardCache.value;
-  const value = await computeDashboard();
-  dashboardCache = { expires: Date.now() + 15_000, value };
-  return value;
+  return cacheLoad("dashboard", computeDashboard, 45_000);
 }
 
 async function computeDashboard() {
@@ -26,9 +22,6 @@ async function computeDashboard() {
     professors,
     countries,
     opportunities,
-    content,
-    published,
-    readyToPublish,
     emergencies,
     activity,
     contentCounts,
@@ -41,11 +34,8 @@ async function computeDashboard() {
     Professor.countDocuments({ archivedAt: null }),
     Country.countDocuments({ active: true }),
     Opportunity.countDocuments({ archivedAt: null }),
-    Content.countDocuments({ archivedAt: null }),
-    Content.countDocuments({ archivedAt: null, contentStatus: "published" }),
-    Content.countDocuments({ archivedAt: null, contentStatus: "ready_to_publish" }),
     EmergencyUpdate.countDocuments({ archivedAt: null, urgency: "emergency" }),
-    ActivityLog.find().sort({ timestamp: -1 }).limit(8).lean(),
+    ActivityLog.find().sort({ timestamp: -1 }).limit(8).select("action entityType timestamp").lean(),
     Content.aggregate([{ $match: { archivedAt: null } }, { $group: { _id: "$contentStatus", count: { $sum: 1 } } }]),
     Deadline.find({
       archivedAt: null,
@@ -56,6 +46,8 @@ async function computeDashboard() {
     Assignment.aggregate([{ $match: { status: "active" } }, { $group: { _id: "$userId", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 5 }]),
     DailyWorkEntry.countDocuments({ workDate: now.toISOString().slice(0, 10) }),
   ]);
+  const counts = Object.fromEntries(contentCounts.map((row) => [String(row._id), row.count as number]));
+  const content = Object.values(counts).reduce((sum, value) => sum + value, 0);
   const buckets = { next5: 0, next7: 0, next30: 0, next60: 0 };
   for (const deadline of deadlines) {
     const state = deadlineState({ closingDate: deadline.closingDate, timeZone: deadline.timezone, warningDays: settings.deadlineWarningDays, now });
@@ -67,9 +59,20 @@ async function computeDashboard() {
     if (days <= 60) buckets.next60 += 1;
   }
   return {
-    metrics: { scholarships, universities, professors, countries, opportunities, content, published, readyToPublish, emergencies, work },
+    metrics: {
+      scholarships,
+      universities,
+      professors,
+      countries,
+      opportunities,
+      content,
+      published: counts.published ?? 0,
+      readyToPublish: counts.ready_to_publish ?? 0,
+      emergencies,
+      work,
+    },
     buckets,
-    contentCounts: Object.fromEntries(contentCounts.map((row) => [String(row._id), row.count as number])),
+    contentCounts: counts,
     activity: activity.map((row) => asRecord(row)),
     workload: assignments.map((row) => ({ userId: String(row._id), count: row.count as number })),
   };

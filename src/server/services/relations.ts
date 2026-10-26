@@ -1,6 +1,6 @@
 import "server-only";
 import { AppError } from "@/lib/errors";
-import { Assignment, CustomFieldDefinition, Deadline, Note, Source, User } from "@/models";
+import { Assignment, Deadline, Note, Source, User } from "@/models";
 import { validateCustomFields, type CustomFieldDefinition as CustomFieldRule } from "@/server/domain/custom-fields";
 import { safeHttpUrl } from "@/server/domain/text";
 import { writeAudit, type AuditChange } from "@/server/services/audit";
@@ -28,15 +28,15 @@ export function cleanDate(value: unknown) {
 }
 
 export async function customValues(entityType: string, values: Record<string, unknown> | undefined) {
-  await ready();
-  const definitions = await CustomFieldDefinition.find({ entityType, active: true }).lean();
+  const { listCustomFields } = await import("@/server/services/settings");
+  const definitions = await listCustomFields(entityType);
   const rules: CustomFieldRule[] = definitions.map((definition) => ({
-    fieldKey: definition.fieldKey,
-    label: definition.label,
+    fieldKey: String(definition.fieldKey ?? ""),
+    label: String(definition.label ?? ""),
     type: definition.type as CustomFieldRule["type"],
-    required: definition.required,
-    options: definition.options,
-    active: definition.active,
+    required: definition.required === true,
+    options: Array.isArray(definition.options) ? definition.options.map(String) : [],
+    active: definition.active !== false,
   }));
   const result = validateCustomFields(rules, values);
   if (!result.ok) throw new AppError("validation", "Check the custom fields.", result.errors);

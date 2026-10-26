@@ -3,9 +3,10 @@ import mongoose, { type Model } from "mongoose";
 import { AppError } from "@/lib/errors";
 import { escapeRegex } from "@/lib/utils";
 import { normalizeText } from "@/server/domain/text";
+import { cacheClear, cacheLoad } from "@/server/cache";
 import { connectDB } from "@/server/db/mongoose";
 import { Country, User } from "@/models";
-import type { ListQuery } from "@/lib/query";
+import { slicePage, type ListQuery } from "@/lib/query";
 
 export type DocModel = Model<mongoose.Document>;
 
@@ -28,23 +29,40 @@ export function searchClause(query: ListQuery, fields: string[]) {
 export async function paginate(model: DocModel, filter: Record<string, unknown>, query: ListQuery, select?: string) {
   const skip = (query.page - 1) * query.pageSize;
   const sort = { [query.sort]: query.dir === "asc" ? 1 : -1 } as Record<string, 1 | -1>;
-  const rowsQuery = model.find(filter).sort(sort).skip(skip).limit(query.pageSize);
+  const rowsQuery = model.find(filter).sort(sort).skip(skip).limit(query.pageSize + 1).maxTimeMS(8_000);
   if (select) rowsQuery.select(select);
-  const [rows, total] = await Promise.all([rowsQuery.lean(), model.countDocuments(filter)]);
-  return {
-    rows,
-    total,
-    page: query.page,
-    pageSize: query.pageSize,
-    pages: Math.max(1, Math.ceil(total / query.pageSize)),
-  };
+  const docs = await rowsQuery.lean();
+  return slicePage(docs, query.page, query.pageSize);
 }
 
 export async function countryLookup(ids: unknown[]) {
   const unique = [...new Set(ids.filter(Boolean).map((id) => String(id)))];
   if (unique.length === 0) return new Map<string, { name: string; code: string }>();
-  const countries = await Country.find({ _id: { $in: unique } }).select("name code").lean();
-  return new Map(countries.map((country) => [String(country._id), { name: country.name, code: country.code }]));
+  const countries = await cachedCountries();
+  const wanted = new Set(unique);
+  return new Map(
+    countries.filter((country) => wanted.has(country.id)).map((country) => [country.id, { name: country.name, code: country.code }]),
+  );
+}
+
+async function cachedCountries() {
+  return cacheLoad(
+    "countries:lookup",
+    async () => {
+      await ready();
+      return (await Country.find().select("name code active").lean()).map((country) => ({
+        id: String(country._id),
+        name: country.name as string,
+        code: country.code as string,
+        active: country.active !== false,
+      }));
+    },
+    120_000,
+  );
+}
+
+export function forgetLookups() {
+  cacheClear("countries");
 }
 
 export async function userLookup(ids: unknown[]) {
@@ -55,9 +73,15 @@ export async function userLookup(ids: unknown[]) {
 }
 
 export async function requireCountry(id: string) {
-  const country = await Country.findOne({ _id: oid(id, "country"), active: true }).lean();
-  if (!country) throw new AppError("validation", "Choose an active country.");
-  return country;
+  oid(id, "country");
+  const countries = await cachedCountries();
+  const country = countries.find((row) => row.id === id && row.active);
+  if (country) return country;
+  await ready();
+  const row = await Country.findOne({ _id: oid(id, "country"), active: true }).select("_id").lean();
+  if (!row) throw new AppError("validation", "Choose an active country.");
+  forgetLookups();
+  return row;
 }
 
 export function notFound(doc: unknown, label: string) {
@@ -82,4 +106,14 @@ export async function archiveDoc(model: DocModel, id: string, actorId: string) {
     .lean();
   if (!doc) throw new AppError("not_found", "That record is not available to archive.");
   return doc;
+}
+
+export async function archiveMany(model: DocModel, ids: string[], actorId: string) {
+  const objectIds = ids.filter((id) => mongoose.isValidObjectId(id)).map((id) => new mongoose.Types.ObjectId(id));
+  if (objectIds.length === 0) return 0;
+  const result = await model.updateMany(
+    { _id: { $in: objectIds }, archivedAt: null },
+    { $set: { archivedAt: new Date(), archivedBy: oid(actorId) }, $inc: { version: 1 } },
+  );
+  return result.modifiedCount;
 }

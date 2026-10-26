@@ -96,6 +96,8 @@ async function main() {
     console.info(`Admin ${email} already exists`);
   }
   const countryCount = await Country.countDocuments();
+  await import("../src/models");
+  await Promise.all(mongoose.modelNames().map((name) => mongoose.model(name).createIndexes().catch(() => undefined)));
   console.info(`Reference data ready. Countries in database: ${countryCount}. No research records were seeded.`);
   await mongoose.disconnect();
 }

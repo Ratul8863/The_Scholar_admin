@@ -34,6 +34,8 @@ const opportunitySchema = new Schema(
   { timestamps: true },
 );
 opportunitySchema.index({ type: 1, countryId: 1, archivedAt: 1 });
+opportunitySchema.index({ type: 1, archivedAt: 1, updatedAt: -1 });
+opportunitySchema.index({ archivedAt: 1, updatedAt: -1 });
 opportunitySchema.index({ normalizedName: 1, normalizedOrganization: 1 });
 opportunitySchema.index({ closingDate: 1 });
 opportunitySchema.index({ openingDate: 1 });
@@ -59,6 +61,7 @@ const emergencySchema = new Schema(
   { timestamps: true },
 );
 emergencySchema.index({ urgency: 1, createdAt: -1 });
+emergencySchema.index({ archivedAt: 1, createdAt: -1 });
 emergencySchema.index({ title: "text", information: "text", informationType: "text" }, { default_language: "none", name: "emergency_text" });
 
 const contentSchema = new Schema(
@@ -83,6 +86,7 @@ const contentSchema = new Schema(
   { timestamps: true },
 );
 contentSchema.index({ contentStatus: 1, updatedAt: -1 });
+contentSchema.index({ archivedAt: 1, contentStatus: 1, updatedAt: -1 });
 contentSchema.index({ relatedEntityType: 1, relatedEntityId: 1 });
 contentSchema.index({ countryId: 1, contentStatus: 1 });
 contentSchema.index({ title: "text" }, { default_language: "none", name: "content_text" });

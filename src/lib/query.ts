@@ -11,6 +11,23 @@ export type ListQuery = {
   filters: Record<string, string>;
 };
 
+export type PageResult<T = Record<string, unknown>> = {
+  rows: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  pages: number;
+  hasMore: boolean;
+};
+
+export function slicePage<T>(docs: T[], page: number, pageSize: number): PageResult<T> {
+  const hasMore = docs.length > pageSize;
+  const rows = hasMore ? docs.slice(0, pageSize) : docs;
+  const pages = Math.max(1, hasMore ? page + 1 : page);
+  const total = (page - 1) * pageSize + rows.length + (hasMore ? 1 : 0);
+  return { rows, hasMore, page, pageSize, pages, total };
+}
+
 const reserved = new Set(["q", "page", "pageSize", "sort", "dir"]);
 
 export function parseListQuery(params: SearchParams, allowedSorts: string[], defaultSort = "updatedAt"): ListQuery {

@@ -8,33 +8,37 @@ import { duplicateAssessment } from "@/server/domain/duplicates";
 import { normalizeText, normalizeUrl } from "@/server/domain/text";
 import { writeAudit } from "@/server/services/audit";
 import { cleanUrl, customValues } from "@/server/services/relations";
-import { archiveDoc, countryLookup, oid, paginate, ready, requireCountry, saveUpdate, searchClause, type DocModel } from "@/server/services/query";
+import { cacheLoad } from "@/server/cache";
+import { archiveDoc, archiveMany, countryLookup, oid, paginate, ready, requireCountry, saveUpdate, searchClause, type DocModel } from "@/server/services/query";
 
 const researchUniversities = ProfessorResearchUniversity as unknown as DocModel;
 const departments = ProfessorDepartment as unknown as DocModel;
 const professors = Professor as unknown as DocModel;
 
 export async function professorCountryCards() {
-  await ready();
-  const rows = await ProfessorResearchUniversity.aggregate([
-    { $match: { archivedAt: null } },
-    { $group: { _id: "$countryId", count: { $sum: 1 } } },
-  ]);
-  const countries = await countryLookup(rows.map((row) => row._id));
-  return rows
-    .map((row) => ({
-      id: String(row._id),
-      name: countries.get(String(row._id))?.name ?? "Unknown",
-      code: countries.get(String(row._id))?.code ?? "",
-      count: row.count as number,
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+  return cacheLoad("cards:professors", async () => {
+    await ready();
+    const rows = await ProfessorResearchUniversity.aggregate([
+      { $match: { archivedAt: null } },
+      { $group: { _id: "$countryId", count: { $sum: 1 } } },
+    ]);
+    const countries = await countryLookup(rows.map((row) => row._id));
+    return rows
+      .map((row) => ({
+        id: String(row._id),
+        name: countries.get(String(row._id))?.name ?? "Unknown",
+        code: countries.get(String(row._id))?.code ?? "",
+        count: row.count as number,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, 45_000);
 }
 
-export async function listProfessorUniversities(countryId: string) {
+export async function listProfessorUniversities(countryId: string, query: ListQuery) {
   await ready();
-  const rows = await ProfessorResearchUniversity.find({ countryId: oid(countryId), archivedAt: null }).sort({ name: 1 }).lean();
-  return rows.map((row) => asRecord(row));
+  const filter: Record<string, unknown> = { countryId: oid(countryId), archivedAt: null, ...searchClause(query, ["name", "city"]) };
+  const page = await paginate(researchUniversities, filter, { ...query, sort: query.sort === "updatedAt" ? "name" : query.sort }, "name city website updatedAt");
+  return { ...page, rows: page.rows.map((row) => asRecord(row)) };
 }
 
 export async function createProfessorUniversity(user: CurrentUser, input: Record<string, unknown>) {
@@ -64,7 +68,7 @@ export async function getProfessorUniversity(id: string) {
   await ready();
   const university = await ProfessorResearchUniversity.findOne({ _id: oid(id), archivedAt: null }).lean();
   if (!university) throw new AppError("not_found", "Professor research university was not found.");
-  const rows = await ProfessorDepartment.find({ professorUniversityId: university._id, archivedAt: null }).sort({ name: 1 }).lean();
+  const rows = await ProfessorDepartment.find({ professorUniversityId: university._id, archivedAt: null }).sort({ name: 1 }).select("name officialUrl").limit(80).lean();
   return { ...asRecord(university), departments: rows.map((row) => asRecord(row)) } as Record<string, unknown> & { departments: Record<string, unknown>[] };
 }
 
@@ -94,8 +98,7 @@ export async function getDepartment(id: string) {
   await ready();
   const department = await ProfessorDepartment.findOne({ _id: oid(id), archivedAt: null }).lean();
   if (!department) throw new AppError("not_found", "Department was not found.");
-  const rows = await Professor.find({ departmentId: department._id, archivedAt: null }).sort({ name: 1 }).limit(100).lean();
-  return { ...asRecord(department), professors: rows.map((row) => asRecord(row)) } as Record<string, unknown> & { professors: Record<string, unknown>[] };
+  return asRecord(department);
 }
 
 function professorPayload(input: Record<string, unknown>, actorId: string) {
@@ -150,7 +153,7 @@ export async function professorDuplicates(input: Record<string, unknown>, except
 }
 
 export async function createProfessor(user: CurrentUser, input: Record<string, unknown>) {
-  const department = await ProfessorDepartment.findOne({ _id: oid(String(input.departmentId)), archivedAt: null }).lean();
+  const department = await ProfessorDepartment.findOne({ _id: oid(String(input.departmentId)), archivedAt: null }).select("_id professorUniversityId countryId").lean();
   if (!department) throw new AppError("not_found", "Department was not found.");
   const duplicates = await professorDuplicates({ ...input, professorUniversityId: String(department.professorUniversityId) });
   if (duplicates.length && input.acknowledgeDuplicate !== true) {
@@ -201,7 +204,7 @@ export async function getProfessor(id: string) {
   await ready();
   const professor = await Professor.findOne({ _id: oid(id), archivedAt: null }).lean();
   if (!professor) throw new AppError("not_found", "Professor was not found.");
-  const publications = await ProfessorPublication.find({ professorId: professor._id }).sort({ year: -1 }).lean();
+  const publications = await ProfessorPublication.find({ professorId: professor._id }).sort({ year: -1 }).select("title year venue url authors").limit(40).lean();
   return { ...asRecord(professor), publications: publications.map((row) => asRecord(row)) } as Record<string, unknown> & { publications: Record<string, unknown>[] };
 }
 
@@ -229,7 +232,8 @@ export async function archiveProfessor(user: CurrentUser, id: string) {
 
 export async function bulkProfessorAction(user: CurrentUser, ids: string[], action: "archive") {
   if (action !== "archive") throw new AppError("validation", "That bulk action is not available.");
-  for (const id of ids) await archiveProfessor(user, id);
+  const count = await archiveMany(professors, ids, user.id);
+  if (count) await writeAudit({ actorUserId: user.id, action: "archive", entityType: "professor", entityId: ids.join(","), metadata: { count } });
 }
 
 export { researchUniversities, departments };

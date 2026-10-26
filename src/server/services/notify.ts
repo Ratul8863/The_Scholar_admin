@@ -34,18 +34,19 @@ export async function notifyUser(input: {
   notificationKey?: string;
 }) {
   await connectDB();
-  if (input.notificationKey) {
-    const existing = await Notification.findOne({ notificationKey: input.notificationKey }).lean();
-    if (existing) return;
+  try {
+    await Notification.create({
+      userId: input.userId,
+      category: input.category,
+      title: input.title,
+      body: input.body ?? "",
+      href: input.href ?? "",
+      notificationKey: input.notificationKey || undefined,
+    });
+  } catch (error) {
+    if (input.notificationKey && typeof error === "object" && error && "code" in error && (error as { code?: number }).code === 11000) return;
+    throw error;
   }
-  await Notification.create({
-    userId: input.userId,
-    category: input.category,
-    title: input.title,
-    body: input.body ?? "",
-    href: input.href ?? "",
-    notificationKey: input.notificationKey || undefined,
-  });
 
   const env = getEnv();
   if (env.EMAIL_NOTIFICATIONS !== "true") return;

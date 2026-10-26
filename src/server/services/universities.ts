@@ -8,6 +8,7 @@ import { duplicateAssessment } from "@/server/domain/duplicates";
 import { normalizeText, normalizeUrl } from "@/server/domain/text";
 import { writeAudit } from "@/server/services/audit";
 import { archiveDeadlines, cleanDate, cleanUrl, customValues, syncDeadline } from "@/server/services/relations";
+import { cacheLoad } from "@/server/cache";
 import { archiveDoc, countryLookup, oid, paginate, ready, requireCountry, saveUpdate, searchClause, type DocModel } from "@/server/services/query";
 
 function choice(value: unknown, fallback: string) {
@@ -24,21 +25,19 @@ export async function listUniversities(query: ListQuery) {
   const filter: Record<string, unknown> = { archivedAt: null, ...searchClause(query, ["name", "city"]) };
   if (query.filters.country) filter.countryId = oid(query.filters.country);
   if (query.filters.type) filter.universityType = query.filters.type;
-  const page = await paginate(universities, filter, query);
+  const page = await paginate(universities, filter, query, "name city countryId universityType applicationStatus website updatedAt");
   const countries = await countryLookup(page.rows.map((row) => (row as { countryId?: unknown }).countryId));
   return {
     ...page,
     rows: page.rows.map((row) => {
       const record = asRecord(row);
-      return { ...record, countryName: countries.get(String(record.countryId ?? ""))?.name ?? "Unknown country" };
+      return { ...record, countryName: countries.get(String(record.countryId ?? ""))?.name ?? "Unknown country" } as Record<string, unknown>;
     }),
   };
 }
 
-export async function universitiesForCountry(countryId: string) {
-  await ready();
-  const rows = await University.find({ countryId: oid(countryId), archivedAt: null }).sort({ name: 1 }).lean();
-  return rows.map((row) => asRecord(row));
+export async function universitiesForCountry(countryId: string, query: ListQuery) {
+  return listUniversities({ ...query, filters: { ...query.filters, country: countryId } });
 }
 
 export async function getUniversity(id: string) {
@@ -46,8 +45,8 @@ export async function getUniversity(id: string) {
   const doc = await University.findOne({ _id: oid(id), archivedAt: null }).lean();
   if (!doc) throw new AppError("not_found", "University was not found.");
   const [programRows, rankingRows] = await Promise.all([
-    UniversityProgram.find({ universityId: doc._id, archivedAt: null }).sort({ name: 1 }).lean(),
-    UniversityRanking.find({ universityId: doc._id }).sort({ year: -1 }).lean(),
+    UniversityProgram.find({ universityId: doc._id, archivedAt: null }).sort({ name: 1 }).select("name department faculty applicationStatus").limit(80).lean(),
+    UniversityRanking.find({ universityId: doc._id }).sort({ year: -1 }).select("organization year overallRank regionalRank subjectRank sourceUrl").limit(30).lean(),
   ]);
   return { ...asRecord(doc), programs: programRows.map((row) => asRecord(row)), rankings: rankingRows.map((row) => asRecord(row)) } as Record<string, unknown> & { programs: Record<string, unknown>[]; rankings: Record<string, unknown>[] };
 }
@@ -139,13 +138,13 @@ export async function getProgram(id: string) {
   await ready();
   const program = await UniversityProgram.findOne({ _id: oid(id), archivedAt: null }).lean();
   if (!program) throw new AppError("not_found", "Program was not found.");
-  const intakeRows = await ProgramIntake.find({ programId: program._id, archivedAt: null }).sort({ year: -1 }).lean();
+  const intakeRows = await ProgramIntake.find({ programId: program._id, archivedAt: null }).sort({ year: -1 }).select("season year openingDate closingDate status sourceUrl version").limit(40).lean();
   return { ...asRecord(program), intakes: intakeRows.map((row) => asRecord(row)) } as Record<string, unknown> & { intakes: Record<string, unknown>[] };
 }
 
 export async function saveProgram(user: CurrentUser, input: Record<string, unknown>) {
   await ready();
-  const university = await University.findOne({ _id: oid(String(input.universityId)), archivedAt: null }).lean();
+  const university = await University.findOne({ _id: oid(String(input.universityId)), archivedAt: null }).select("_id countryId").lean();
   if (!university) throw new AppError("not_found", "University was not found.");
   const name = String(input.name ?? "").trim();
   if (name.length < 2) throw new AppError("validation", "Enter the program name.");
@@ -248,18 +247,20 @@ export async function saveRanking(user: CurrentUser, input: Record<string, unkno
 }
 
 export async function countryCards() {
-  await ready();
-  const rows = await University.aggregate([
-    { $match: { archivedAt: null } },
-    { $group: { _id: "$countryId", count: { $sum: 1 } } },
-  ]);
-  const countries = await countryLookup(rows.map((row) => row._id));
-  return rows
-    .map((row) => ({
-      id: String(row._id),
-      name: countries.get(String(row._id))?.name ?? "Unknown",
-      code: countries.get(String(row._id))?.code ?? "",
-      count: row.count as number,
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+  return cacheLoad("cards:universities", async () => {
+    await ready();
+    const rows = await University.aggregate([
+      { $match: { archivedAt: null } },
+      { $group: { _id: "$countryId", count: { $sum: 1 } } },
+    ]);
+    const countries = await countryLookup(rows.map((row) => row._id));
+    return rows
+      .map((row) => ({
+        id: String(row._id),
+        name: countries.get(String(row._id))?.name ?? "Unknown",
+        code: countries.get(String(row._id))?.code ?? "",
+        count: row.count as number,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, 45_000);
 }

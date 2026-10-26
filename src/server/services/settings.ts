@@ -5,22 +5,16 @@ import { asRecord } from "@/lib/serialize";
 import { forgetCachedUsers, type CurrentUser } from "@/server/auth/current-user";
 import { CUSTOM_FIELD_TYPES } from "@/server/domain/custom-fields";
 import { PERMISSIONS } from "@/server/permissions/catalog";
+import { cacheClear, cacheLoad } from "@/server/cache";
 import { writeAudit } from "@/server/services/audit";
 import { oid, ready } from "@/server/services/query";
 
-const referenceCache = new Map<string, { expires: number; value: unknown }>();
-
-function cached<T>(key: string, load: () => Promise<T>, ttl = 30_000): Promise<T> {
-  const hit = referenceCache.get(key);
-  if (hit && hit.expires > Date.now()) return Promise.resolve(hit.value as T);
-  return load().then((value) => {
-    referenceCache.set(key, { expires: Date.now() + ttl, value });
-    return value;
-  });
+function cached<T>(key: string, load: () => Promise<T>, ttl = 300_000): Promise<T> {
+  return cacheLoad(key, load, ttl);
 }
 
 function clearReferenceCache() {
-  referenceCache.clear();
+  cacheClear();
 }
 
 const catalogs = {

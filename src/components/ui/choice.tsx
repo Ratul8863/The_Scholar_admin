@@ -285,6 +285,7 @@ export function Combobox({
   const inputRef = useRef<HTMLInputElement>(null);
   const optionValues = options.map((option) => option.value).join("\n");
   const remoteValues = remote.map((option) => option.value).join("\n");
+  const useRemote = Boolean(lookup) && options.length === 0;
   const known = useMemo(() => {
     const map = new Map<string, ChoiceOption>();
     for (const option of [...options, ...remote]) if (option.value) map.set(option.value, option);
@@ -308,7 +309,7 @@ export function Combobox({
   }, [lookup, current, optionValues, remoteValues]);
 
   useEffect(() => {
-    if (!open || !lookup) return;
+    if (!open || !useRemote || !lookup) return;
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
       setStatus("loading");
@@ -336,12 +337,12 @@ export function Combobox({
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [open, lookup, query, current]);
+  }, [open, useRemote, lookup, query, current]);
 
   const visible = useMemo(() => {
-    const source = lookup ? remote : options.filter((option) => option.label.toLowerCase().includes(query.trim().toLowerCase()));
+    const source = useRemote ? remote : options.filter((option) => option.label.toLowerCase().includes(query.trim().toLowerCase()));
     return emptyLabel ? [{ value: "", label: emptyLabel }, ...source] : source;
-  }, [lookup, remote, options, query, emptyLabel]);
+  }, [useRemote, remote, options, query, emptyLabel]);
   const selected = current ? known.get(current) : undefined;
 
   function commit(next: string) {

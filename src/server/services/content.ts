@@ -97,19 +97,19 @@ export async function contentWorkspace(user: CurrentUser) {
   const now = new Date();
   const soon = new Date(now.getTime() + settings.openingSoonDays * 86_400_000);
   const freshAfter = new Date(now.getTime() - settings.newInformationDays * 86_400_000);
-  const [emergency, inProgress, readyToPublish, published, deadlines, scholarships, opportunities, universities, emergencies] = await Promise.all([
-    EmergencyUpdate.find({ archivedAt: null }).sort({ urgency: -1, createdAt: -1 }).limit(8).lean(),
-    Content.find({ archivedAt: null, contentStatus: { $nin: ["ready_to_publish", "published", "archived"] } }).sort({ updatedAt: -1 }).limit(12).lean(),
-    Content.find({ archivedAt: null, contentStatus: "ready_to_publish" }).sort({ readyDate: 1 }).limit(12).lean(),
-    Content.find({ archivedAt: null, contentStatus: "published" }).sort({ publishedDate: -1 }).limit(12).lean(),
-    Deadline.find({ archivedAt: null, closingDate: { $gte: now } }).sort({ closingDate: 1 }).limit(40).lean(),
-    Scholarship.find({ archivedAt: null, updatedAt: { $gte: freshAfter } }).sort({ updatedAt: -1 }).limit(8).select("name updatedAt researchStatus countryId").lean(),
-    Opportunity.find({ archivedAt: null, updatedAt: { $gte: freshAfter } }).sort({ updatedAt: -1 }).limit(8).select("name type updatedAt researchStatus").lean(),
+  const [emergency, inProgress, readyToPublish, published, deadlines, opening, scholarships, opportunities, universities, emergencies, productivity] = await Promise.all([
+    EmergencyUpdate.find({ archivedAt: null }).sort({ urgency: -1, createdAt: -1 }).limit(8).select("title informationType urgency sourceName createdAt").lean(),
+    Content.find({ archivedAt: null, contentStatus: { $nin: ["ready_to_publish", "published", "archived"] } }).sort({ updatedAt: -1 }).limit(12).select("title contentStatus updatedAt").lean(),
+    Content.find({ archivedAt: null, contentStatus: "ready_to_publish" }).sort({ readyDate: 1 }).limit(12).select("title readyDate").lean(),
+    Content.find({ archivedAt: null, contentStatus: "published" }).sort({ publishedDate: -1 }).limit(12).select("title publishedDate").lean(),
+    Deadline.find({ archivedAt: null, closingDate: { $gte: now } }).sort({ closingDate: 1 }).limit(40).select("label closingDate openingDate timezone entityType entityId").lean(),
+    Deadline.find({ archivedAt: null, openingDate: { $gte: now, $lte: soon } }).sort({ openingDate: 1 }).limit(20).select("label openingDate timezone entityType entityId").lean(),
+    Scholarship.find({ archivedAt: null, updatedAt: { $gte: freshAfter } }).sort({ updatedAt: -1 }).limit(8).select("name updatedAt").lean(),
+    Opportunity.find({ archivedAt: null, updatedAt: { $gte: freshAfter } }).sort({ updatedAt: -1 }).limit(8).select("name type updatedAt").lean(),
     University.find({ archivedAt: null, updatedAt: { $gte: freshAfter } }).sort({ updatedAt: -1 }).limit(8).select("name updatedAt").lean(),
     EmergencyUpdate.find({ archivedAt: null, createdAt: { $gte: freshAfter } }).sort({ createdAt: -1 }).limit(8).select("title createdAt urgency").lean(),
+    Content.aggregate([{ $match: { archivedAt: null } }, { $group: { _id: "$contentStatus", count: { $sum: 1 } } }]),
   ]);
-  const opening = await Deadline.find({ archivedAt: null, openingDate: { $gte: now, $lte: soon } }).sort({ openingDate: 1 }).limit(20).lean();
-  const productivity = await Content.aggregate([{ $match: { archivedAt: null } }, { $group: { _id: "$contentStatus", count: { $sum: 1 } } }]);
   return {
     viewer: user.name,
     emergency: emergency.map((row) => asRecord(row)),
@@ -146,6 +146,6 @@ export async function listContent(status?: string) {
   await ready();
   const filter: Record<string, unknown> = { archivedAt: null };
   if (status) filter.contentStatus = status;
-  const rows = await Content.find(filter).sort({ updatedAt: -1 }).limit(50).lean();
+  const rows = await Content.find(filter).sort({ updatedAt: -1 }).limit(50).select("title contentType contentStatus updatedAt plannedDate").lean();
   return rows.map((row) => asRecord(row));
 }

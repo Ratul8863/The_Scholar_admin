@@ -29,7 +29,7 @@ export async function addDailyEntry(user: CurrentUser, input: Record<string, unk
 export async function productivity(userId: string, month: string) {
   await ready();
   const start = /^\d{4}-\d{2}$/.test(month) ? month : new Date().toISOString().slice(0, 7);
-  const rows = await DailyWorkEntry.find({ userId: oid(userId), workDate: { $gte: `${start}-01`, $lte: `${start}-31` } }).sort({ workDate: -1 }).lean();
+  const rows = await DailyWorkEntry.find({ userId: oid(userId), workDate: { $gte: `${start}-01`, $lte: `${start}-31` } }).sort({ workDate: -1 }).select("workDate entryType title durationMinutes category").lean();
   const entries = rows.map((row) => asRecord(row));
   const minutes = entries.reduce((sum, entry) => sum + Number(entry.durationMinutes ?? 0), 0);
   const byWeek = new Map<string, { entries: number; minutes: number }>();

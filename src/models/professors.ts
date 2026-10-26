@@ -13,7 +13,8 @@ const professorUniversitySchema = new Schema(
   },
   { timestamps: true },
 );
-professorUniversitySchema.index({ countryId: 1, archivedAt: 1 });
+professorUniversitySchema.index({ countryId: 1, archivedAt: 1, name: 1 });
+professorUniversitySchema.index({ archivedAt: 1, name: 1 });
 professorUniversitySchema.index({ normalizedName: 1, countryId: 1 });
 
 const departmentSchema = new Schema(
@@ -29,6 +30,7 @@ const departmentSchema = new Schema(
   },
   { timestamps: true },
 );
+departmentSchema.index({ professorUniversityId: 1, archivedAt: 1, name: 1 });
 
 const professorSchema = new Schema(
   {
@@ -56,6 +58,10 @@ const professorSchema = new Schema(
   { timestamps: true },
 );
 professorSchema.index({ professorUniversityId: 1, departmentId: 1, archivedAt: 1 });
+professorSchema.index({ departmentId: 1, archivedAt: 1, name: 1 });
+professorSchema.index({ countryId: 1, archivedAt: 1 });
+professorSchema.index({ archivedAt: 1, updatedAt: -1 });
+professorSchema.index({ researchStatus: 1, archivedAt: 1 });
 professorSchema.index({ normalizedName: 1, professorUniversityId: 1 });
 professorSchema.index({ normalizedEmail: 1 });
 professorSchema.index({ normalizedProfile: 1 });

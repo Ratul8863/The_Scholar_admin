@@ -1,6 +1,6 @@
 import { listActivity } from "@/server/services/audit";
 import { userLookup } from "@/server/services/query";
-import { PageHeader } from "@/components/layout/page";
+import { PageHeader, Pager } from "@/components/layout/page";
 import { ContentCard } from "@/components/ui/card";
 import { titleCaseStatus } from "@/lib/utils";
 
@@ -23,6 +23,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
           ))}
         </ul>
       </ContentCard>
+      <Pager page={data.page} hasMore={data.hasMore} path="/activity" query={{ entityType: params.entityType }} />
     </div>
   );
 }

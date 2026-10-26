@@ -122,7 +122,7 @@ export async function listEmergencies(query: ListQuery) {
   const filter: Record<string, unknown> = { archivedAt: null, ...searchClause(query, ["title", "informationType"]) };
   if (query.filters.urgency) filter.urgency = query.filters.urgency;
   if (query.filters.country) filter.countryId = oid(query.filters.country);
-  const page = await paginate(emergencies, filter, { ...query, sort: query.sort === "updatedAt" ? "createdAt" : query.sort });
+  const page = await paginate(emergencies, filter, { ...query, sort: query.sort === "updatedAt" ? "createdAt" : query.sort }, "title informationType urgency createdAt sourceName");
   return { ...page, rows: page.rows.map((row) => asRecord(row)) };
 }
 
