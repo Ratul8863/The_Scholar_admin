@@ -95,7 +95,7 @@ export function RecordForm({
           </ul>
         </AlertCard>
       ) : null}
-      <div className={`sticky bottom-3 flex flex-wrap justify-end gap-2 ${panelClass} p-3`}>
+      <div className={`form-actions ${panelClass}`}>
         <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
         <Button type="submit" disabled={pending} aria-busy={pending}>{pending ? "Saving" : submitLabel}</Button>
       </div>

@@ -8,6 +8,8 @@ const countrySchema = new Schema(
     flag: { type: String, default: "" },
     active: { type: Boolean, default: true, index: true },
     displayOrder: { type: Number, default: 0 },
+    universityCount: { type: Number, default: 0 },
+    professorUniversityCount: { type: Number, default: 0 },
     createdBy: { type: objectId, ref: "User" },
   },
   { timestamps: true },

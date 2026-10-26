@@ -13,7 +13,7 @@ export function ProfessorGrid({ rows }: { rows: RowRecord[] }) {
   const router = useRouter();
   const [message, setMessage] = useState("");
   const columns: LegacyColumnDef<RowRecord>[] = [
-    { accessorKey: "name", header: "Professor", cell: ({ row }) => <Link className="font-medium text-primary" href={`/professors/records/${row.original.id}`}>{String(row.original.name)}</Link> },
+    { accessorKey: "name", header: "Professor", cell: ({ row }) => <Link className="font-medium text-primary" href={`/professors/records/${row.original.id}`} prefetch={false}>{String(row.original.name)}</Link> },
     { accessorKey: "designation", header: "Designation" },
     { accessorKey: "email", header: "Email", cell: ({ row }) => <InlineEmail row={row.original} onSaved={() => router.refresh()} /> },
     { accessorKey: "researchAreas", header: "Research areas" },
@@ -40,7 +40,7 @@ function InlineEmail({ row, onSaved }: { row: RowRecord; onSaved: () => void }) 
   const [value, setValue] = useState(String(row.email ?? ""));
   return (
     <form
-      className="flex gap-1"
+      className="flex min-w-0 flex-col gap-1 sm:flex-row"
       onSubmit={async (event) => {
         event.preventDefault();
         await saveProfessorAction({ id: row.id, version: row.version, email: value, inline: true, name: row.name });

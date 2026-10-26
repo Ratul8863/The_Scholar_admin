@@ -40,7 +40,7 @@ export function DataTable({
   const selected = Object.keys(rowSelection);
   return (
     <div>
-      <div className="mb-3 flex flex-wrap gap-2">
+      <div className="chip-row mb-3">
         {table.getAllLeafColumns().map((column) => (
           <label key={column.id} className="filter-chip compact cursor-pointer gap-2">
             <input type="checkbox" className="accent-primary" checked={column.getIsVisible()} onChange={column.getToggleVisibilityHandler()} />

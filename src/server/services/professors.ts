@@ -8,30 +8,25 @@ import { duplicateAssessment } from "@/server/domain/duplicates";
 import { normalizeText, normalizeUrl } from "@/server/domain/text";
 import { writeAudit } from "@/server/services/audit";
 import { cleanUrl, customValues } from "@/server/services/relations";
-import { cacheLoad } from "@/server/cache";
-import { archiveDoc, archiveMany, countryLookup, oid, paginate, ready, requireCountry, saveUpdate, searchClause, type DocModel } from "@/server/services/query";
+import { bumpCountryCount, syncCountryCountsIfNeeded } from "@/server/services/country-counts";
+import { listCountries } from "@/server/services/settings";
+import { archiveDoc, archiveMany, oid, paginate, ready, requireCountry, saveUpdate, searchClause, type DocModel } from "@/server/services/query";
 
 const researchUniversities = ProfessorResearchUniversity as unknown as DocModel;
 const departments = ProfessorDepartment as unknown as DocModel;
 const professors = Professor as unknown as DocModel;
 
 export async function professorCountryCards() {
-  return cacheLoad("cards:professors", async () => {
-    await ready();
-    const rows = await ProfessorResearchUniversity.aggregate([
-      { $match: { archivedAt: null } },
-      { $group: { _id: "$countryId", count: { $sum: 1 } } },
-    ]);
-    const countries = await countryLookup(rows.map((row) => row._id));
-    return rows
-      .map((row) => ({
-        id: String(row._id),
-        name: countries.get(String(row._id))?.name ?? "Unknown",
-        code: countries.get(String(row._id))?.code ?? "",
-        count: row.count as number,
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, 45_000);
+  await syncCountryCountsIfNeeded();
+  const countries = await listCountries();
+  return countries
+    .filter((country) => country.active !== false)
+    .map((country) => ({
+      id: String(country.id),
+      name: String(country.name),
+      code: String(country.code ?? ""),
+      count: Number(country.professorUniversityCount ?? 0),
+    }));
 }
 
 export async function listProfessorUniversities(countryId: string, query: ListQuery) {
@@ -60,6 +55,7 @@ export async function createProfessorUniversity(user: CurrentUser, input: Record
     createdBy: oid(user.id),
     updatedBy: oid(user.id),
   });
+  await bumpCountryCount(countryId, "professorUniversityCount", 1);
   await writeAudit({ actorUserId: user.id, action: "create", entityType: "professorResearchUniversity", entityId: String(doc._id) });
   return String(doc._id);
 }

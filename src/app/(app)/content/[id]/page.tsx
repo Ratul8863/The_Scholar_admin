@@ -33,7 +33,7 @@ export default async function ContentDetailPage({ params }: { params: Promise<{ 
       </SectionCard>
       <SectionCard title="Reference">
         <p className="text-sm">{String(content.relatedEntityType)} · {String(content.relatedEntityId)}</p>
-        {content.publicUrl ? <a className="text-sm text-primary" href={String(content.publicUrl)}>{String(content.publicUrl)}</a> : <p className="text-sm text-muted">No public URL yet.</p>}
+        {content.publicUrl ? <a className="break-all text-sm text-primary" href={String(content.publicUrl)}>{String(content.publicUrl)}</a> : <p className="text-sm text-muted">No public URL yet.</p>}
       </SectionCard>
     </div>
   );

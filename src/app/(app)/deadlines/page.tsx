@@ -19,7 +19,7 @@ export default async function DeadlinesPage({ searchParams }: { searchParams: Pr
   return (
     <div>
       <PageHeader title="Deadlines" description="Dates are calculated from stored opening and closing timestamps. Missing dates stay unknown." />
-      <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+      <div className="chip-row mb-4">
         {buckets.map(([key, label]) => (
           <Link key={key} href={`/deadlines?bucket=${key}`} className="filter-chip" data-active={bucket === key ? "true" : "false"}>{label}</Link>
         ))}

@@ -35,7 +35,7 @@ export default async function ContentPage() {
         <ul className="space-y-2 text-sm">
           {data.opening.length === 0 ? <li className="text-muted">No opening dates in the configured window.</li> : null}
           {data.opening.map((item) => (
-            <li key={String(item.id)} className="flex justify-between gap-3"><span>{String(item.label)}</span><span className="num text-muted">{String(item.daysUntilOpening ?? "—")} days</span></li>
+            <li key={String(item.id)} className="flex flex-wrap justify-between gap-2"><span className="min-w-0 [overflow-wrap:anywhere]">{String(item.label)}</span><span className="num text-muted">{String(item.daysUntilOpening ?? "—")} days</span></li>
           ))}
         </ul>
       </SectionCard>
@@ -60,7 +60,7 @@ export default async function ContentPage() {
       <SectionCard title="Published">
         <ul className="space-y-2 text-sm">
           {data.published.length === 0 ? <li className="text-muted">Published items will be listed here.</li> : null}
-          {data.published.map((item) => <li key={String(item.id)} className="flex justify-between"><Link href={`/content/${item.id}`}>{String(item.title)}</Link><span className="text-muted">{item.publishedDate ? new Date(String(item.publishedDate)).toLocaleDateString() : ""}</span></li>)}
+          {data.published.map((item) => <li key={String(item.id)} className="flex flex-wrap justify-between gap-2"><Link className="min-w-0 [overflow-wrap:anywhere]" href={`/content/${item.id}`}>{String(item.title)}</Link><span className="text-muted">{item.publishedDate ? new Date(String(item.publishedDate)).toLocaleDateString() : ""}</span></li>)}
         </ul>
       </SectionCard>
       <SectionCard title="Content productivity">

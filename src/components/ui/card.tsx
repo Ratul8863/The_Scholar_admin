@@ -74,11 +74,11 @@ export function NavigationCard({
   meta?: React.ReactNode;
 }) {
   return (
-    <Link href={href} className="action-card">
+    <Link href={href} prefetch={false} className="action-card">
       <span className="min-w-0">
         {eyebrow ? <span className="type-14">{eyebrow}</span> : null}
-        <h2 className="type-18">{title}</h2>
-        {description ? <span className="type-16 mt-1 block text-muted">{description}</span> : null}
+        <h2 className="type-18 [overflow-wrap:anywhere]">{title}</h2>
+        {description ? <span className="type-16 mt-1 block text-muted [overflow-wrap:anywhere]">{description}</span> : null}
         {meta ? <span className="type-14 num mt-2 block">{meta}</span> : null}
       </span>
       <span className="icon-circle-ink" aria-hidden>
@@ -101,23 +101,21 @@ export function RecordCard({
 }) {
   const body = (
     <>
-      <span className="flex min-w-0 flex-1 items-start justify-between gap-3">
-        <span className="min-w-0">
-          <span className="type-18 block">{title}</span>
-          {meta ? <span className="type-14 mt-1 block">{meta}</span> : null}
-        </span>
+      <span className="min-w-0 flex-1">
+        <span className="type-18 block [overflow-wrap:anywhere]">{title}</span>
+        {meta ? <span className="type-14 mt-1 block [overflow-wrap:anywhere]">{meta}</span> : null}
+        {children ? <div className="type-16 mt-3">{children}</div> : null}
       </span>
       {href ? (
         <span className="icon-circle-ink" aria-hidden>
           <ChevronRight className="nav-arrow h-4 w-4" />
         </span>
       ) : null}
-      {children ? <div className="type-16 mt-3 w-full">{children}</div> : null}
     </>
   );
   if (!href) return <article className="warm-sheet">{body}</article>;
   return (
-    <Link href={href} className="action-card flex-wrap">
+    <Link href={href} prefetch={false} className="action-card">
       {body}
     </Link>
   );
@@ -145,6 +143,6 @@ export function AlertCard({
       {children ? <div className="type-16 mt-3">{children}</div> : null}
     </>
   );
-  if (href) return <Link href={href} className="alert-card is-pressable" data-tone={tone}>{body}</Link>;
+  if (href) return <Link href={href} prefetch={false} className="alert-card is-pressable" data-tone={tone}>{body}</Link>;
   return <section className="alert-card" data-tone={tone}>{body}</section>;
 }

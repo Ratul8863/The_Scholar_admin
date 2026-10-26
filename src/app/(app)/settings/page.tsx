@@ -26,7 +26,7 @@ export default async function SettingsPage() {
       <PageHeader title="Settings" description="Configurable reference data. Structural changes are written to the activity log." />
       <SectionCard title="Countries">
         <ul className="mb-3 text-sm">{countries.map((country) => <li key={String(country.id)}>{String(country.name)} ({String(country.code)}) {country.active === false ? "· inactive" : ""}</li>)}</ul>
-        <form action={saveCountryAction} className="grid gap-2 sm:grid-cols-4"><Input name="name" placeholder="Name" required /><Input name="code" placeholder="Code" required /><Input name="displayOrder" type="number" placeholder="Order" /><Button type="submit">Add country</Button></form>
+        <form action={saveCountryAction} className="grid gap-2 md:grid-cols-2 xl:grid-cols-4"><Input name="name" placeholder="Name" required /><Input name="code" placeholder="Code" required /><Input name="displayOrder" type="number" placeholder="Order" /><Button type="submit">Add country</Button></form>
       </SectionCard>
       <Catalog title="Degree levels" kind="degreeLevels" rows={degrees} />
       <Catalog title="Funding types" kind="fundingTypes" rows={funding} />
@@ -35,7 +35,7 @@ export default async function SettingsPage() {
       <Catalog title="Document types" kind="documentTypes" rows={documents} />
       <SectionCard title="Statuses">
         <ul className="mb-3 text-sm">{statuses.map((status) => <li key={String(status.id)}>{String(status.scope)} · {String(status.label)}</li>)}</ul>
-        <form action={saveStatusAction} className="grid gap-2 sm:grid-cols-4"><Input name="scope" placeholder="Scope" required /><Input name="key" placeholder="Key" required /><Input name="label" placeholder="Label" required /><Button type="submit">Save status</Button></form>
+        <form action={saveStatusAction} className="grid gap-2 md:grid-cols-2 xl:grid-cols-4"><Input name="scope" placeholder="Scope" required /><Input name="key" placeholder="Key" required /><Input name="label" placeholder="Label" required /><Button type="submit">Save status</Button></form>
       </SectionCard>
       <SectionCard title="Custom fields">
         <ul className="mb-3 text-sm">{customFields.map((field) => <li key={String(field.id)}>{String(field.entityType)} · {String(field.label)} · {String(field.type)}</li>)}</ul>
@@ -75,7 +75,7 @@ function Catalog({ title, kind, rows }: { title: string; kind: "degreeLevels" | 
   return (
     <SectionCard title={title}>
       <ul className="mb-3 text-sm">{rows.map((row) => <li key={String(row.id)}>{String(row.name)}</li>)}</ul>
-      <form action={saveCatalogAction.bind(null, kind)} className="grid gap-2 sm:grid-cols-3"><Input name="name" placeholder="Name" required /><Input name="description" placeholder="Description" /><Button type="submit">Add</Button></form>
+      <form action={saveCatalogAction.bind(null, kind)} className="grid gap-2 md:grid-cols-3"><Input name="name" placeholder="Name" required /><Input name="description" placeholder="Description" /><Button type="submit">Add</Button></form>
     </SectionCard>
   );
 }

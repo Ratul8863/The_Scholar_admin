@@ -21,7 +21,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
   }
 
   return (
-    <main className="grid min-h-screen place-items-center bg-canvas px-4">
+    <main className="grid min-h-dvh place-items-center bg-canvas px-4 py-10 sm:px-6">
       <div className="warm-sheet w-full max-w-md">
         <ScholarLogo className="mb-5 w-44" />
         <h1 className="page-title">Accept invitation</h1>

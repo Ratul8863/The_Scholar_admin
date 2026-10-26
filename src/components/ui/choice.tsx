@@ -232,7 +232,8 @@ export function Select({
         <Popover.Content
           align="start"
           sideOffset={6}
-          className="sand-menu w-[var(--radix-popover-trigger-width)] min-w-56"
+          collisionPadding={12}
+          className="sand-menu"
           onKeyDown={onKeyDown}
         >
           <ChoiceList options={parsed} value={current} active={active} listId={listId} onActive={setActive} onPick={(option) => commit(option.value)} empty="No choices" />
@@ -376,7 +377,7 @@ export function Combobox({
         </button>
       </Popover.Trigger>
       <Popover.Portal>
-        <Popover.Content align="start" sideOffset={6} className="sand-menu w-[var(--radix-popover-trigger-width)] min-w-64" onOpenAutoFocus={(event) => { event.preventDefault(); inputRef.current?.focus(); }}>
+        <Popover.Content align="start" sideOffset={6} collisionPadding={12} className="sand-menu" onOpenAutoFocus={(event) => { event.preventDefault(); inputRef.current?.focus(); }}>
           <div className="border-b border-line p-2">
             <input
               ref={inputRef}
@@ -489,7 +490,7 @@ export function DateField({
         </button>
       </Popover.Trigger>
       <Popover.Portal>
-        <Popover.Content id={listId} role="dialog" aria-label="Choose a date" align="start" sideOffset={6} className="sand-menu w-96">
+        <Popover.Content id={listId} role="dialog" aria-label="Choose a date" align="start" sideOffset={6} collisionPadding={12} className="sand-menu is-calendar">
           <div className="mb-2 flex items-center justify-between">
             <button type="button" className="icon-circle" aria-label="Previous month" onClick={() => setCursor(addMonths(cursor, -1))}><ChevronLeft className="h-4 w-4" /></button>
             <p className="type-16">{format(cursor, "MMMM yyyy")}</p>

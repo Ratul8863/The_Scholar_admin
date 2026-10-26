@@ -59,7 +59,7 @@ export async function updateSettings(user: CurrentUser, input: Record<string, un
 export async function listCountries() {
   return cached("countries", async () => {
     await ready();
-    return (await Country.find().sort({ displayOrder: 1, name: 1 }).select("name code flag active displayOrder").lean()).map((row) => asRecord(row));
+    return (await Country.find().sort({ displayOrder: 1, name: 1 }).select("name code flag active displayOrder universityCount professorUniversityCount").lean()).map((row) => asRecord(row));
   });
 }
 

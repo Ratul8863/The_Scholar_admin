@@ -21,7 +21,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ progra
       <SectionCard title="Requirements and fees">
         <p className="text-sm">Tuition: {program.tuitionFee == null || program.tuitionFee === "" ? "Not verified" : String(program.tuitionFee)} {String(program.currency || "")}</p>
         <p className="mt-2 text-sm">Application fee: {program.applicationFee == null || program.applicationFee === "" ? "Not verified" : String(program.applicationFee)}</p>
-        <p className="mt-2 whitespace-pre-wrap text-sm">{String(program.academicRequirements || "Academic requirements not verified")}</p>
+        <p className="mt-2 whitespace-pre-wrap text-sm [overflow-wrap:anywhere]">{String(program.academicRequirements || "Academic requirements not verified")}</p>
         <p className="mt-2 text-sm text-muted">Bangladesh eligible: {String(program.bangladeshEligible)}</p>
       </SectionCard>
       <SectionCard title="Intakes">

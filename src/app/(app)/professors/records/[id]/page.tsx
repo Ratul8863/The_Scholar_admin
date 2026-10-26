@@ -22,9 +22,9 @@ export default async function ProfessorRecordPage({ params }: { params: Promise<
       <PageHeader title={String(professor.name)} description={fact(professor.designation)} />
       <SectionCard title="Research">
         <p className="text-sm"><span className="text-muted">Email: </span>{fact(professor.email)}</p>
-        <p className="mt-2 whitespace-pre-wrap text-sm"><span className="text-muted">Recent: </span>{fact(professor.recentResearch)}</p>
-        <p className="mt-2 whitespace-pre-wrap text-sm"><span className="text-muted">Previous: </span>{fact(professor.previousResearch)}</p>
-        <p className="mt-2 text-sm"><span className="text-muted">Profile: </span>{professor.officialProfile ? <a className="text-primary" href={String(professor.officialProfile)}>{String(professor.officialProfile)}</a> : "Not publicly available"}</p>
+        <p className="mt-2 whitespace-pre-wrap text-sm [overflow-wrap:anywhere]"><span className="text-muted">Recent: </span>{fact(professor.recentResearch)}</p>
+        <p className="mt-2 whitespace-pre-wrap text-sm [overflow-wrap:anywhere]"><span className="text-muted">Previous: </span>{fact(professor.previousResearch)}</p>
+        <p className="mt-2 text-sm"><span className="text-muted">Profile: </span>{professor.officialProfile ? <a className="break-all text-primary" href={String(professor.officialProfile)}>{String(professor.officialProfile)}</a> : "Not publicly available"}</p>
       </SectionCard>
       <SectionCard title="Publications">
         <ul className="text-sm">{publications.length === 0 ? <li className="text-muted">No publications recorded.</li> : publications.map((item) => <li key={String(item.id)}>{String(item.title)}</li>)}</ul>

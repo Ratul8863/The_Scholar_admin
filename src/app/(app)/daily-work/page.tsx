@@ -12,7 +12,7 @@ export default async function DailyWorkPage({ searchParams }: { searchParams: Pr
   return (
     <div className="space-y-4">
       <PageHeader title="Daily work" description="Operational notes and completed work. This is not employee surveillance." />
-      <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
         <SectionCard title="Add entry">
           <form action={dailyEntryAction} className="grid gap-2">
             <Select name="entryType" aria-label="Entry type" options={[{ value: "work", label: "Completed work" }, { value: "note", label: "Daily note" }]} />
@@ -29,10 +29,10 @@ export default async function DailyWorkPage({ searchParams }: { searchParams: Pr
             <p className="text-sm">{data.entries.length} entries · <span className="num">{data.minutes}</span> minutes recorded</p>
           </SectionCard>
           <SectionCard title="Weekly summary">
-            <ul className="space-y-1 text-sm">{data.weeks.length === 0 ? <li className="text-muted">No entries this month.</li> : data.weeks.map((week) => <li key={week.week} className="flex justify-between"><span>Week of {week.week}</span><span className="num">{week.entries} entries · {week.minutes} min</span></li>)}</ul>
+            <ul className="space-y-1 text-sm">{data.weeks.length === 0 ? <li className="text-muted">No entries this month.</li> : data.weeks.map((week) => <li key={week.week} className="flex flex-wrap justify-between gap-2"><span>Week of {week.week}</span><span className="num">{week.entries} entries · {week.minutes} min</span></li>)}</ul>
           </SectionCard>
           <SectionCard title="Entries">
-            <ul className="space-y-2 text-sm">{data.entries.map((entry) => <li key={String(entry.id)}><span className="text-muted">{String(entry.workDate)} · {String(entry.entryType)} · </span>{String(entry.title)}</li>)}</ul>
+            <ul className="space-y-2 text-sm">{data.entries.map((entry) => <li key={String(entry.id)} className="[overflow-wrap:anywhere]"><span className="text-muted">{String(entry.workDate)} · {String(entry.entryType)} · </span>{String(entry.title)}</li>)}</ul>
           </SectionCard>
         </div>
       </div>

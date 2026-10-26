@@ -20,7 +20,7 @@ export function PageHeader({
         <h1 className="page-title">{title}</h1>
         {description ? <p className="type-16 mt-2 max-w-3xl text-muted">{description}</p> : null}
       </div>
-      {action ? <div className="flex shrink-0 flex-wrap gap-2">{action}</div> : null}
+      {action ? <div className="page-actions">{action}</div> : null}
     </div>
   );
 }

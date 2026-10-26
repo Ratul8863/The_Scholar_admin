@@ -15,6 +15,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - Use refined pill buttons, consistent custom form controls, and searchable comboboxes for large university, country, and professor lists.
 - Apply a slight lift hover only to clickable cards (about 3px, ~180ms). Leave tables, static cards, and forms still. Avoid glassmorphism, heavy shadows, dark hover overlays, and opacity-only hovers.
 - Keep one shared design system across every module. Preserve auth, permissions, MongoDB, search, filters, and CRUD when changing UI.
+- The app should feel light and immediate: clicks and CRUD must respond at once. Keep API payloads lean, paginate large lists, and treat multi-second page loads as a bug.
 
 ## Learned Workspace Facts
 

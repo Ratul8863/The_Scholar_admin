@@ -17,7 +17,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
           {data.rows.map((row) => (
             <li key={String(row._id)} className="py-3 text-sm">
               <p><span className="font-medium">{users.get(String(row.actorUserId))?.name ?? "User"}</span> {titleCaseStatus(row.action)} {row.entityType}</p>
-              {row.changes?.length ? <p className="text-muted">{row.changes.map((change: { field?: string; oldValue?: unknown; newValue?: unknown }) => `${change.field}: ${JSON.stringify(change.oldValue)} → ${JSON.stringify(change.newValue)}`).join("; ")}</p> : null}
+              {row.changes?.length ? <p className="text-muted [overflow-wrap:anywhere]">{row.changes.map((change: { field?: string; oldValue?: unknown; newValue?: unknown }) => `${change.field}: ${JSON.stringify(change.oldValue)} → ${JSON.stringify(change.newValue)}`).join("; ")}</p> : null}
               <time className="text-xs text-muted">{new Date(row.timestamp).toLocaleString()}</time>
             </li>
           ))}

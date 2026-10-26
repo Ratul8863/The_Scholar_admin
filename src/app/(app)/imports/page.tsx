@@ -17,7 +17,7 @@ export default function ImportsPage() {
         <div className="grid gap-3">
           <Select aria-label="Import type" value={entityType} onChange={(event) => setEntityType(event.target.value)} options={[{ value: "scholarship", label: "Scholarships" }, { value: "university", label: "Universities" }, { value: "professor", label: "Professors" }, { value: "opportunity", label: "Opportunities" }]} />
           <Textarea aria-label="Import data" value={csv} onChange={(event) => setCsv(event.target.value)} placeholder="name,provider,countryId,officialUrl" />
-          <div className="flex gap-2">
+          <div className="page-actions">
             <Button type="button" onClick={async () => { const result = await importAction(entityType, csv, false); setSummary(JSON.stringify(result, null, 2)); }}>Validate and import</Button>
             <Button type="button" variant="secondary" onClick={async () => { const result = await importAction(entityType, csv, true); setSummary(JSON.stringify(result, null, 2)); }}>Import including duplicates</Button>
           </div>

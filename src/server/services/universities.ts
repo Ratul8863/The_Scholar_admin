@@ -8,7 +8,8 @@ import { duplicateAssessment } from "@/server/domain/duplicates";
 import { normalizeText, normalizeUrl } from "@/server/domain/text";
 import { writeAudit } from "@/server/services/audit";
 import { archiveDeadlines, cleanDate, cleanUrl, customValues, syncDeadline } from "@/server/services/relations";
-import { cacheLoad } from "@/server/cache";
+import { bumpCountryCount, syncCountryCountsIfNeeded } from "@/server/services/country-counts";
+import { listCountries } from "@/server/services/settings";
 import { archiveDoc, countryLookup, oid, paginate, ready, requireCountry, saveUpdate, searchClause, type DocModel } from "@/server/services/query";
 
 function choice(value: unknown, fallback: string) {
@@ -79,6 +80,7 @@ export async function createUniversity(user: CurrentUser, input: Record<string, 
     createdBy: oid(user.id),
     updatedBy: oid(user.id),
   });
+  await bumpCountryCount(countryId, "universityCount", 1);
   await writeAudit({ actorUserId: user.id, action: "create", entityType: "university", entityId: String(doc._id) });
   return String(doc._id);
 }
@@ -109,6 +111,7 @@ export async function updateUniversity(user: CurrentUser, id: string, input: Rec
   if (duplicates.length && input.acknowledgeDuplicate !== true) {
     throw new AppError("duplicate", "A possible duplicate university already exists.", { matches: duplicates });
   }
+  const previousCountry = String(current.countryId);
   await saveUpdate(universities, id, Number(input.version ?? current.version), {
     name,
     normalizedName: normalizeText(name),
@@ -125,11 +128,17 @@ export async function updateUniversity(user: CurrentUser, id: string, input: Rec
     customFields: await customValues("university", (input.customFields as Record<string, unknown>) ?? {}),
     updatedBy: oid(user.id),
   });
+  if (previousCountry !== countryId) {
+    await bumpCountryCount(previousCountry, "universityCount", -1);
+    await bumpCountryCount(countryId, "universityCount", 1);
+  }
   await writeAudit({ actorUserId: user.id, action: "edit", entityType: "university", entityId: id });
 }
 
 export async function archiveUniversity(user: CurrentUser, id: string) {
-  await archiveDoc(universities, id, user.id);
+  const doc = await archiveDoc(universities, id, user.id);
+  const countryId = String((doc as { countryId?: unknown }).countryId ?? "");
+  if (countryId) await bumpCountryCount(countryId, "universityCount", -1);
   await archiveDeadlines("university", id);
   await writeAudit({ actorUserId: user.id, action: "archive", entityType: "university", entityId: id });
 }
@@ -247,20 +256,14 @@ export async function saveRanking(user: CurrentUser, input: Record<string, unkno
 }
 
 export async function countryCards() {
-  return cacheLoad("cards:universities", async () => {
-    await ready();
-    const rows = await University.aggregate([
-      { $match: { archivedAt: null } },
-      { $group: { _id: "$countryId", count: { $sum: 1 } } },
-    ]);
-    const countries = await countryLookup(rows.map((row) => row._id));
-    return rows
-      .map((row) => ({
-        id: String(row._id),
-        name: countries.get(String(row._id))?.name ?? "Unknown",
-        code: countries.get(String(row._id))?.code ?? "",
-        count: row.count as number,
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, 45_000);
+  await syncCountryCountsIfNeeded();
+  const countries = await listCountries();
+  return countries
+    .filter((country) => country.active !== false)
+    .map((country) => ({
+      id: String(country.id),
+      name: String(country.name),
+      code: String(country.code ?? ""),
+      count: Number(country.universityCount ?? 0),
+    }));
 }

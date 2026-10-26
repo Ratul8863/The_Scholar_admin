@@ -19,7 +19,7 @@ export default async function ScholarshipsPage({ searchParams }: { searchParams:
   return (
     <div>
       <PageHeader title="Scholarships" description="Research status, publication status, and deadline state stay separate." action={can(user, "scholarship.create") ? <Button asChild><Link href="/scholarships/new">Add scholarship</Link></Button> : null} />
-      <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_14rem_14rem]">
+      <div className="filter-bar is-three">
         <Suspense><SearchBox placeholder="Search name or provider" /></Suspense>
         <Suspense><FilterSelect name="country" label="Country" value={query.filters.country} options={countryOptions} /></Suspense>
         <Suspense><FilterSelect name="research" label="Research" value={query.filters.research} options={["new", "researching", "fact_checking", "verified", "needs_correction", "rejected"].map((value) => ({ value, label: value.replaceAll("_", " ") }))} /></Suspense>
@@ -50,7 +50,7 @@ export default async function ScholarshipsPage({ searchParams }: { searchParams:
                 const state = deadlineState({ openingDate: row.openingDate as string | null, closingDate: row.closingDate as string | null });
                 return (
                   <tr key={String(row.id)}>
-                    <td><Link className="font-medium text-primary" href={`/scholarships/${row.id}`}>{String(row.name)}</Link></td>
+                    <td><Link className="font-medium text-primary" href={`/scholarships/${row.id}`} prefetch={false}>{String(row.name)}</Link></td>
                     <td>{String(row.provider)}</td>
                     <td>{String(row.countryName)}</td>
                     <td><Badge tone={statusTone(String(row.researchStatus))}>{String(row.researchStatus).replaceAll("_", " ")}</Badge></td>

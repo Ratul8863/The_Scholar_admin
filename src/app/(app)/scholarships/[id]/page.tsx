@@ -41,8 +41,8 @@ export default async function ScholarshipDetailPage({ params }: { params: Promis
       <div className="grid gap-4 lg:grid-cols-2">
         <SectionCard title="Overview">
           <dl className="grid gap-2 text-sm">
-            <div><dt className="text-muted">Official link</dt><dd>{record.officialUrl ? <a className="text-primary" href={String(record.officialUrl)}>{String(record.officialUrl)}</a> : "Not verified"}</dd></div>
-            <div><dt className="text-muted">Application link</dt><dd>{record.applicationUrl ? String(record.applicationUrl) : "Not verified"}</dd></div>
+            <div><dt className="text-muted">Official link</dt><dd className="break-all">{record.officialUrl ? <a className="text-primary" href={String(record.officialUrl)}>{String(record.officialUrl)}</a> : "Not verified"}</dd></div>
+            <div><dt className="text-muted">Application link</dt><dd className="break-all">{record.applicationUrl ? String(record.applicationUrl) : "Not verified"}</dd></div>
           </dl>
         </SectionCard>
         <SectionCard title="Eligibility">
