@@ -169,8 +169,11 @@ export async function updateRolePermissions(user: CurrentUser, roleId: string, p
   if (unknown.length) throw new AppError("validation", "Unknown permission.");
   const role = await Role.findById(oid(roleId));
   if (!role) throw new AppError("not_found", "Role was not found.");
-  if (role.key === "admin" && !permissions.includes("team.manage")) {
+  if ((role.key === "admin" || role.key === "super_admin") && !permissions.includes("team.manage")) {
     throw new AppError("validation", "The admin role must keep team management.");
+  }
+  if (role.key === "super_admin" && !permissions.includes("team.invite_admin")) {
+    throw new AppError("validation", "Super Admin must keep the ability to create admins.");
   }
   const before = [...role.permissions];
   role.permissions = permissions;

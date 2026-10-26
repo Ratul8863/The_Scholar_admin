@@ -41,8 +41,9 @@ async function main() {
   for (const [key, permissions] of Object.entries(DEFAULT_ROLE_PERMISSIONS)) {
     await Role.updateOne({ key }, { $set: { name: ROLE_LABELS[key], permissions, system: true, description: `${ROLE_LABELS[key]} default access` } }, { upsert: true });
   }
+  const superRole = await Role.findOne({ key: "super_admin" });
   const adminRole = await Role.findOne({ key: "admin" });
-  if (!adminRole) throw new Error("Admin role was not created.");
+  if (!superRole || !adminRole) throw new Error("Super Admin and Admin roles were not created.");
 
   for (const [index, label] of degrees.entries()) {
     const key = label.toLowerCase().replace(/[^a-z0-9]+/g, "_");
@@ -90,10 +91,13 @@ async function main() {
 
   const existing = await User.findOne({ email }).select("+passwordHash");
   if (!existing) {
-    await User.create({ name, email, passwordHash: await hash(password, 12), roleId: adminRole._id, active: true, emailVerifiedAt: new Date() });
-    console.info(`Created admin ${email}`);
+    await User.create({ name, email, passwordHash: await hash(password, 12), roleId: superRole._id, active: true, emailVerifiedAt: new Date() });
+    console.info(`Created Super Admin ${email}`);
   } else {
-    console.info(`Admin ${email} already exists`);
+    if (String(existing.roleId) !== String(superRole._id)) {
+      await User.updateOne({ _id: existing._id }, { $set: { roleId: superRole._id } });
+    }
+    console.info(`Super Admin ${email} already exists`);
   }
   const countryCount = await Country.countDocuments();
   await import("../src/models");

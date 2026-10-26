@@ -32,6 +32,7 @@ export const PERMISSIONS = [
   "verification.read",
   "verification.update",
   "team.manage",
+  "team.invite_admin",
   "settings.manage",
   "custom_fields.manage",
   "activity.read",
@@ -58,7 +59,8 @@ const readResearch: Permission[] = [
 ];
 
 export const DEFAULT_ROLE_PERMISSIONS: Record<string, Permission[]> = {
-  admin: [...PERMISSIONS],
+  super_admin: [...PERMISSIONS],
+  admin: PERMISSIONS.filter((permission) => permission !== "team.invite_admin"),
   researcher: [
     ...readResearch,
     "scholarship.create",
@@ -113,6 +115,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<string, Permission[]> = {
 };
 
 export const ROLE_LABELS: Record<string, string> = {
+  super_admin: "Super Admin",
   admin: "Admin",
   researcher: "Researcher",
   verifier: "Verifier",
@@ -128,4 +131,14 @@ export function hasPermission(granted: readonly string[], permission: string) {
 
 export function hasAnyPermission(granted: readonly string[], permissions: readonly string[]) {
   return permissions.some((permission) => granted.includes(permission));
+}
+
+export function isSuperAdmin(roleKey: string) {
+  return roleKey === "super_admin";
+}
+
+export function canAssignRole(actorRoleKey: string, targetRoleKey: string) {
+  if (targetRoleKey === "super_admin") return false;
+  if (targetRoleKey === "admin") return isSuperAdmin(actorRoleKey);
+  return true;
 }

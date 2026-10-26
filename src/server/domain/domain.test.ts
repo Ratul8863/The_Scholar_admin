@@ -7,7 +7,7 @@ import { canTransition, permissionsForTransition } from "@/server/domain/workflo
 import { verificationProgress } from "@/server/domain/verification";
 import { validateCustomFields } from "@/server/domain/custom-fields";
 import { assessInvitation, hashToken, tokensMatch } from "@/server/domain/invitations";
-import { hasAnyPermission, hasPermission } from "@/server/permissions/catalog";
+import { canAssignRole, hasAnyPermission, hasPermission, isSuperAdmin } from "@/server/permissions/catalog";
 
 describe("permissions", () => {
   it("checks granted permissions without looking at role names", () => {
@@ -15,6 +15,14 @@ describe("permissions", () => {
     expect(hasPermission(granted, "scholarship.read")).toBe(true);
     expect(hasPermission(granted, "scholarship.delete")).toBe(false);
     expect(hasAnyPermission(granted, ["content.design", "content.publish"])).toBe(true);
+  });
+
+  it("lets only Super Admin create Admin accounts", () => {
+    expect(isSuperAdmin("super_admin")).toBe(true);
+    expect(canAssignRole("super_admin", "admin")).toBe(true);
+    expect(canAssignRole("admin", "admin")).toBe(false);
+    expect(canAssignRole("super_admin", "super_admin")).toBe(false);
+    expect(canAssignRole("admin", "researcher")).toBe(true);
   });
 });
 

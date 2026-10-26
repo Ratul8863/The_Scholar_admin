@@ -45,6 +45,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           await connectDB();
           const { compare } = await import("bcryptjs");
           const { Role, User } = await import("@/models/identity");
+          const { ensureSystemRoles } = await import("@/server/services/team");
+          await ensureSystemRoles();
           const user = await User.findOne({ email }).select("+passwordHash");
           if (!user?.active || !user.passwordHash) throw new InvalidLogin();
           const matches = await compare(password, user.passwordHash);

@@ -15,7 +15,7 @@ import { archiveEmergency, archiveOpportunity, saveEmergency, saveOpportunity } 
 import { saveContent, transitionContent } from "@/server/services/content";
 import { saveVerification } from "@/server/services/verification";
 import { addDailyEntry } from "@/server/services/daily";
-import { acceptInvitation, changeUserRole, inviteMember, revokeInvitation, setUserActive } from "@/server/services/team";
+import { acceptInvitation, changeUserRole, inviteAdmin, inviteMember, revokeInvitation, setUserActive } from "@/server/services/team";
 import { commitImport, parseImport } from "@/server/services/imports";
 import { markNotificationsRead } from "@/server/services/notify";
 import {
@@ -335,6 +335,15 @@ export async function inviteAction(formData: FormData) {
     revalidatePath("/team");
     return { id: "ok" };
   }));
+}
+
+export async function inviteAdminAction(input: { email: string; name?: string }) {
+  return runAction(async () => {
+    const user = await getVerifiedUser();
+    const invite = await inviteAdmin(user, input);
+    revalidatePath("/team");
+    return { id: invite.email, ...invite };
+  });
 }
 
 export async function revokeInviteAction(id: string) {
