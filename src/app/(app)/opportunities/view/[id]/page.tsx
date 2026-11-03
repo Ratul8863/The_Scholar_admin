@@ -28,7 +28,7 @@ export default async function OpportunityViewPage({ params }: { params: Promise<
             canEdit={can(user, "opportunity.update")}
             canArchive={can(user, "record.archive")}
             afterArchiveHref={`/opportunities/${type}`}
-            onArchive={async () => archiveOpportunityAction(id)}
+            onArchive={archiveOpportunityAction.bind(null, id)}
           />
         }
       />

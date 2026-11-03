@@ -25,8 +25,11 @@ export default async function SettingsPage() {
     <div className="space-y-4">
       <PageHeader title="Settings" description="Configurable reference data. Structural changes are written to the activity log." />
       <SectionCard title="Countries">
-        <ul className="mb-3 text-sm">{countries.map((country) => <li key={String(country.id)}>{String(country.name)} ({String(country.code)}) {country.active === false ? "· inactive" : ""}</li>)}</ul>
-        <form action={saveCountryAction} className="grid gap-2 md:grid-cols-2 xl:grid-cols-4"><Input name="name" placeholder="Name" required /><Input name="code" placeholder="Code" required /><Input name="displayOrder" type="number" placeholder="Order" /><Button type="submit">Add country</Button></form>
+        <div id="countries" className="scroll-mt-24">
+          <p className="type-14 mb-3">Shared by universities, scholarships, and professor research. Add a country once; it appears in every module.</p>
+          <ul className="mb-3 text-sm">{countries.map((country) => <li key={String(country.id)}>{String(country.name)} ({String(country.code)}) {country.active === false ? "· inactive" : ""}</li>)}</ul>
+          <form action={saveCountryAction} className="grid gap-2 md:grid-cols-2 xl:grid-cols-4"><Input name="name" placeholder="Name" required /><Input name="code" placeholder="Code" required /><Input name="displayOrder" type="number" placeholder="Order" /><Button type="submit">Add country</Button></form>
+        </div>
       </SectionCard>
       <Catalog title="Degree levels" kind="degreeLevels" rows={degrees} />
       <Catalog title="Funding types" kind="fundingTypes" rows={funding} />

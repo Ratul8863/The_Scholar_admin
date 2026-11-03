@@ -37,7 +37,7 @@ export default async function ProfessorRecordPage({ params }: { params: Promise<
             canEdit={can(user, "professor.update")}
             canArchive={can(user, "record.archive")}
             afterArchiveHref={departmentId ? `/professors/departments/${departmentId}` : "/professors/table"}
-            onArchive={async () => archiveProfessorAction(id)}
+            onArchive={archiveProfessorAction.bind(null, id)}
           />
         }
       />

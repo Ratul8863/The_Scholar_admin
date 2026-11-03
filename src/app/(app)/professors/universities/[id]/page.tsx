@@ -33,7 +33,7 @@ export default async function ProfessorUniversityPage({ params }: { params: Prom
               canEdit={can(user, "professor.update")}
               canArchive={can(user, "record.archive")}
               afterArchiveHref={countryId ? `/professors/countries/${countryId}` : "/professors"}
-              onArchive={async () => archiveProfessorUniversityAction(id)}
+              onArchive={archiveProfessorUniversityAction.bind(null, id)}
             />
             {can(user, "professor.create") ? <Button asChild><Link href={`/professors/universities/${university.id}/departments/new`} prefetch={false}>Add department</Link></Button> : null}
           </div>

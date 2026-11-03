@@ -4,8 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-
-type ActionResult = { ok: true } | { ok: false; error: { message: string } };
+import type { ActionResult } from "@/lib/errors";
 
 export function RecordActions({
   editHref,
@@ -19,7 +18,8 @@ export function RecordActions({
   canEdit?: boolean;
   canArchive?: boolean;
   archiveLabel?: string;
-  onArchive?: () => Promise<ActionResult>;
+  /** Bound server action, e.g. archiveUniversityAction.bind(null, id) */
+  onArchive?: () => Promise<ActionResult<unknown>>;
   afterArchiveHref?: string;
 }) {
   const router = useRouter();

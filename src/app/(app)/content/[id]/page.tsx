@@ -32,7 +32,7 @@ export default async function ContentDetailPage({ params }: { params: Promise<{ 
             canEdit={can(user, "content.update")}
             canArchive={can(user, "record.archive")}
             afterArchiveHref="/content"
-            onArchive={async () => archiveContentAction(id)}
+            onArchive={archiveContentAction.bind(null, id)}
           />
         }
       />

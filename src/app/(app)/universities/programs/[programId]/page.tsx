@@ -31,7 +31,7 @@ export default async function ProgramPage({ params }: { params: Promise<{ progra
             canEdit={can(user, "university.update")}
             canArchive={can(user, "record.archive")}
             afterArchiveHref={universityId ? `/universities/${universityId}` : "/universities"}
-            onArchive={async () => archiveProgramAction(programId)}
+            onArchive={archiveProgramAction.bind(null, programId)}
           />
         }
       />

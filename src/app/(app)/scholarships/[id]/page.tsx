@@ -44,7 +44,7 @@ export default async function ScholarshipDetailPage({ params }: { params: Promis
               canArchive={can(user, "record.archive")}
               archiveLabel="Archive scholarship"
               afterArchiveHref="/scholarships"
-              onArchive={async () => archiveScholarshipAction(id)}
+              onArchive={archiveScholarshipAction.bind(null, id)}
             />
             <Button asChild variant="outline"><Link href="/scholarships">Back to list</Link></Button>
           </div>

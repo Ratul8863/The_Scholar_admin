@@ -29,7 +29,7 @@ export default async function EmergencyDetailPage({ params }: { params: Promise<
               canEdit={can(user, "emergency.update")}
               canArchive={can(user, "record.archive")}
               afterArchiveHref="/emergency"
-              onArchive={async () => archiveEmergencyAction(id)}
+              onArchive={archiveEmergencyAction.bind(null, id)}
             />
           </div>
         }
