@@ -9,10 +9,22 @@ import { SavedView } from "@/models/platform";
 import { oid } from "@/server/services/query";
 import { addNote, addSource, assignUser } from "@/server/services/relations";
 import { archiveScholarship, createScholarship, updateScholarship, type ScholarshipInput } from "@/server/services/scholarships";
-import { archiveUniversity, createUniversity, saveIntake, saveProgram, saveRanking, updateUniversity } from "@/server/services/universities";
-import { addPublication, archiveProfessor, bulkProfessorAction, createDepartment, createProfessor, createProfessorUniversity, updateProfessor } from "@/server/services/professors";
+import { archiveProgram, archiveUniversity, createUniversity, saveIntake, saveProgram, saveRanking, updateUniversity } from "@/server/services/universities";
+import {
+  addPublication,
+  archiveDepartment,
+  archiveProfessor,
+  archiveProfessorUniversity,
+  bulkProfessorAction,
+  createDepartment,
+  createProfessor,
+  createProfessorUniversity,
+  updateDepartment,
+  updateProfessor,
+  updateProfessorUniversity,
+} from "@/server/services/professors";
 import { archiveEmergency, archiveOpportunity, saveEmergency, saveOpportunity } from "@/server/services/opportunities";
-import { saveContent, transitionContent } from "@/server/services/content";
+import { archiveContent, saveContent, transitionContent } from "@/server/services/content";
 import { saveVerification } from "@/server/services/verification";
 import { addDailyEntry } from "@/server/services/daily";
 import { acceptInvitation, changeUserRole, inviteAdmin, inviteMember, revokeInvitation, setUserActive } from "@/server/services/team";
@@ -127,6 +139,17 @@ export async function saveProgramAction(input: Record<string, unknown>) {
     afterWrite();
     revalidatePath("/universities");
     if (input.universityId) revalidatePath(`/universities/${input.universityId}`);
+    revalidatePath(`/universities/programs/${id}`);
+    return { id };
+  });
+}
+
+export async function archiveProgramAction(id: string) {
+  return runAction(async () => {
+    const user = await gate("record.archive");
+    await archiveProgram(user, id);
+    afterWrite();
+    revalidatePath("/universities");
     return { id };
   });
 }
@@ -151,8 +174,21 @@ export async function saveRankingAction(input: Record<string, unknown>) {
 
 export async function saveProfessorUniversityAction(input: Record<string, unknown>) {
   return runAction(async () => {
-    const user = await gate("professor.create");
-    const id = await createProfessorUniversity(user, input);
+    const user = await gate(input.id ? "professor.update" : "professor.create");
+    const id = input.id
+      ? (await updateProfessorUniversity(user, String(input.id), input), String(input.id))
+      : await createProfessorUniversity(user, input);
+    afterWrite();
+    revalidatePath("/professors");
+    revalidatePath(`/professors/universities/${id}`);
+    return { id };
+  });
+}
+
+export async function archiveProfessorUniversityAction(id: string) {
+  return runAction(async () => {
+    const user = await gate("record.archive");
+    await archiveProfessorUniversity(user, id);
     afterWrite();
     revalidatePath("/professors");
     return { id };
@@ -161,10 +197,21 @@ export async function saveProfessorUniversityAction(input: Record<string, unknow
 
 export async function saveDepartmentAction(input: Record<string, unknown>) {
   return runAction(async () => {
-    const user = await gate("professor.create");
-    const id = await createDepartment(user, input);
+    const user = await gate(input.id ? "professor.update" : "professor.create");
+    const id = input.id ? (await updateDepartment(user, String(input.id), input), String(input.id)) : await createDepartment(user, input);
     afterWrite();
     if (input.professorUniversityId) revalidatePath(`/professors/universities/${input.professorUniversityId}`);
+    revalidatePath(`/professors/departments/${id}`);
+    return { id };
+  });
+}
+
+export async function archiveDepartmentAction(id: string) {
+  return runAction(async () => {
+    const user = await gate("record.archive");
+    await archiveDepartment(user, id);
+    afterWrite();
+    revalidatePath("/professors");
     return { id };
   });
 }
@@ -175,6 +222,7 @@ export async function saveProfessorAction(input: Record<string, unknown>) {
     const id = input.id ? (await updateProfessor(user, String(input.id), input), String(input.id)) : await createProfessor(user, input);
     afterWrite();
     revalidatePath("/professors/table");
+    revalidatePath(`/professors/records/${id}`);
     return { id };
   });
 }
@@ -184,6 +232,7 @@ export async function archiveProfessorAction(id: string) {
     const user = await gate("record.archive");
     await archiveProfessor(user, id);
     afterWrite();
+    revalidatePath("/professors/table");
     return { id };
   });
 }
@@ -222,6 +271,7 @@ export async function archiveOpportunityAction(id: string) {
     const user = await gate("record.archive");
     await archiveOpportunity(user, id);
     afterWrite();
+    revalidatePath("/opportunities");
     return { id };
   });
 }
@@ -242,6 +292,8 @@ export async function archiveEmergencyAction(id: string) {
     const user = await gate("record.archive");
     await archiveEmergency(user, id);
     afterWrite();
+    revalidatePath("/emergency");
+    revalidatePath("/content");
     return { id };
   });
 }
@@ -250,6 +302,17 @@ export async function saveContentAction(input: Record<string, unknown>) {
   return runAction(async () => {
     const user = await gate(input.id ? "content.update" : "content.create");
     const id = await saveContent(user, input);
+    afterWrite();
+    revalidatePath("/content");
+    revalidatePath(`/content/${id}`);
+    return { id };
+  });
+}
+
+export async function archiveContentAction(id: string) {
+  return runAction(async () => {
+    const user = await gate("record.archive");
+    await archiveContent(user, id);
     afterWrite();
     revalidatePath("/content");
     return { id };

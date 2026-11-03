@@ -60,6 +60,41 @@ export async function createProfessorUniversity(user: CurrentUser, input: Record
   return String(doc._id);
 }
 
+export async function updateProfessorUniversity(user: CurrentUser, id: string, input: Record<string, unknown>) {
+  await ready();
+  const current = await ProfessorResearchUniversity.findOne({ _id: oid(id), archivedAt: null }).lean();
+  if (!current) throw new AppError("not_found", "Professor research university was not found.");
+  const name = String(input.name ?? current.name).trim();
+  if (name.length < 2) throw new AppError("validation", "Enter the professor-research university name.");
+  const countryId = String(input.countryId ?? current.countryId);
+  await requireCountry(countryId);
+  const website = cleanUrl(input.website ?? current.website);
+  const previousCountry = String(current.countryId);
+  await saveUpdate(researchUniversities, id, Number(input.version ?? current.version), {
+    name,
+    normalizedName: normalizeText(name),
+    countryId: oid(countryId),
+    city: String(input.city ?? ""),
+    website,
+    normalizedWebsite: website ? normalizeUrl(website) : "",
+    fieldAvailability: input.fieldAvailability ?? current.fieldAvailability ?? {},
+    customFields: await customValues("professorResearchUniversity", (input.customFields as Record<string, unknown>) ?? {}),
+    updatedBy: oid(user.id),
+  });
+  if (previousCountry !== countryId) {
+    await bumpCountryCount(previousCountry, "professorUniversityCount", -1);
+    await bumpCountryCount(countryId, "professorUniversityCount", 1);
+  }
+  await writeAudit({ actorUserId: user.id, action: "edit", entityType: "professorResearchUniversity", entityId: id });
+}
+
+export async function archiveProfessorUniversity(user: CurrentUser, id: string) {
+  const doc = await archiveDoc(researchUniversities, id, user.id);
+  const countryId = String((doc as { countryId?: unknown }).countryId ?? "");
+  if (countryId) await bumpCountryCount(countryId, "professorUniversityCount", -1);
+  await writeAudit({ actorUserId: user.id, action: "archive", entityType: "professorResearchUniversity", entityId: id });
+}
+
 export async function getProfessorUniversity(id: string) {
   await ready();
   const university = await ProfessorResearchUniversity.findOne({ _id: oid(id), archivedAt: null }).lean();
@@ -88,6 +123,29 @@ export async function createDepartment(user: CurrentUser, input: Record<string, 
   });
   await writeAudit({ actorUserId: user.id, action: "create", entityType: "professorDepartment", entityId: String(doc._id) });
   return String(doc._id);
+}
+
+export async function updateDepartment(user: CurrentUser, id: string, input: Record<string, unknown>) {
+  await ready();
+  const current = await ProfessorDepartment.findOne({ _id: oid(id), archivedAt: null }).lean();
+  if (!current) throw new AppError("not_found", "Department was not found.");
+  const name = String(input.name ?? current.name).trim();
+  if (name.length < 2) throw new AppError("validation", "Enter the department name.");
+  await saveUpdate(departments, id, Number(input.version ?? current.version), {
+    name,
+    normalizedName: normalizeText(name),
+    officialUrl: cleanUrl(input.officialUrl ?? current.officialUrl),
+    researchAreas: String(input.researchAreas ?? (Array.isArray(current.researchAreas) ? current.researchAreas.join(", ") : "")).split(",").map((item) => item.trim()).filter(Boolean),
+    description: String(input.description ?? ""),
+    customFields: await customValues("professorDepartment", (input.customFields as Record<string, unknown>) ?? {}),
+    updatedBy: oid(user.id),
+  });
+  await writeAudit({ actorUserId: user.id, action: "edit", entityType: "professorDepartment", entityId: id });
+}
+
+export async function archiveDepartment(user: CurrentUser, id: string) {
+  await archiveDoc(departments, id, user.id);
+  await writeAudit({ actorUserId: user.id, action: "archive", entityType: "professorDepartment", entityId: id });
 }
 
 export async function getDepartment(id: string) {

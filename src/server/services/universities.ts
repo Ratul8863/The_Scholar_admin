@@ -151,6 +151,18 @@ export async function getProgram(id: string) {
   return { ...asRecord(program), intakes: intakeRows.map((row) => asRecord(row)) } as Record<string, unknown> & { intakes: Record<string, unknown>[] };
 }
 
+export async function archiveProgram(user: CurrentUser, id: string) {
+  const program = await archiveDoc(programs, id, user.id);
+  await archiveDeadlines("program", id);
+  await writeAudit({
+    actorUserId: user.id,
+    action: "archive",
+    entityType: "program",
+    entityId: id,
+    metadata: { universityId: String((program as { universityId?: unknown }).universityId ?? "") },
+  });
+}
+
 export async function saveProgram(user: CurrentUser, input: Record<string, unknown>) {
   await ready();
   const university = await University.findOne({ _id: oid(String(input.universityId)), archivedAt: null }).select("_id countryId").lean();

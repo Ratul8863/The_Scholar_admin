@@ -6,12 +6,14 @@ import { deadlineLabel, deadlineState, daysRemaining } from "@/server/domain/dea
 import { AppError } from "@/lib/errors";
 import { PageHeader, SectionCard } from "@/components/layout/page";
 import { Badge, statusTone } from "@/components/ui/badge";
-import { addNoteAction, addSourceAction } from "@/server/actions/mutations";
+import { addNoteAction, addSourceAction, archiveScholarshipAction } from "@/server/actions/mutations";
+import { can, getCurrentUser } from "@/server/auth/current-user";
 import { Note, Source } from "@/models/platform";
 import { oid } from "@/server/services/query";
 import { Input, Select, Textarea } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AlertCard } from "@/components/ui/card";
+import { RecordActions } from "@/components/records/record-actions";
 
 export default async function ScholarshipDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -22,6 +24,7 @@ export default async function ScholarshipDetailPage({ params }: { params: Promis
     if (error instanceof AppError && error.code === "not_found") notFound();
     throw error;
   }
+  const user = await getCurrentUser();
   const score = completeness(record, [...REQUIRED_FIELDS.scholarship], (record.fieldAvailability as Record<string, "unknown" | "not_public">) ?? {});
   const state = deadlineState({ openingDate: record.openingDate as string | null, closingDate: record.closingDate as string | null, timeZone: String(record.timezone ?? "UTC") });
   const notes = await Note.find({ entityType: "scholarship", entityId: oid(id) }).sort({ createdAt: -1 }).lean();
@@ -29,7 +32,24 @@ export default async function ScholarshipDetailPage({ params }: { params: Promis
   const eligibility = (record.eligibility ?? {}) as Record<string, unknown>;
   return (
     <div className="space-y-4">
-      <PageHeader eyebrow="Scholarship" title={String(record.name)} description={String(record.provider)} action={<Button asChild variant="outline"><Link href="/scholarships">Back to list</Link></Button>} />
+      <PageHeader
+        eyebrow="Scholarship"
+        title={String(record.name)}
+        description={String(record.provider)}
+        action={
+          <div className="flex flex-wrap items-center gap-2">
+            <RecordActions
+              editHref={`/scholarships/${id}/edit`}
+              canEdit={can(user, "scholarship.update")}
+              canArchive={can(user, "record.archive")}
+              archiveLabel="Archive scholarship"
+              afterArchiveHref="/scholarships"
+              onArchive={async () => archiveScholarshipAction(id)}
+            />
+            <Button asChild variant="outline"><Link href="/scholarships">Back to list</Link></Button>
+          </div>
+        }
+      />
       <div className="flex flex-wrap gap-2">
         <Badge tone={statusTone(String(record.researchStatus))}>{String(record.researchStatus).replaceAll("_", " ")}</Badge>
         <Badge tone={statusTone(String(record.publicationStatus))}>{String(record.publicationStatus).replaceAll("_", " ")}</Badge>

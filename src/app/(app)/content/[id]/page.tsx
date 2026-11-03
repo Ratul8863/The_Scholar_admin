@@ -1,7 +1,9 @@
 import { getContent } from "@/server/services/content";
-import { transitionContentAction } from "@/server/actions/mutations";
+import { can, getCurrentUser } from "@/server/auth/current-user";
+import { archiveContentAction, transitionContentAction } from "@/server/actions/mutations";
 import { CONTENT_STATUSES, canTransition } from "@/server/domain/workflow";
 import { PageHeader, SectionCard } from "@/components/layout/page";
+import { RecordActions } from "@/components/records/record-actions";
 import { Button } from "@/components/ui/button";
 import { AppError } from "@/lib/errors";
 import { notFound } from "next/navigation";
@@ -16,11 +18,24 @@ export default async function ContentDetailPage({ params }: { params: Promise<{ 
     if (error instanceof AppError) notFound();
     throw error;
   }
+  const user = await getCurrentUser();
   const status = String(content.contentStatus);
   const next = CONTENT_STATUSES.filter((item) => canTransition(status, item));
   return (
     <div className="space-y-4">
-      <PageHeader title={String(content.title)} description={titleCaseStatus(status)} />
+      <PageHeader
+        title={String(content.title)}
+        description={titleCaseStatus(status)}
+        action={
+          <RecordActions
+            editHref={`/content/${id}/edit`}
+            canEdit={can(user, "content.update")}
+            canArchive={can(user, "record.archive")}
+            afterArchiveHref="/content"
+            onArchive={async () => archiveContentAction(id)}
+          />
+        }
+      />
       <SectionCard title="Workflow">
         <p className="mb-3 text-sm text-muted">Moving to Ready to publish does not publish the item.</p>
         <div className="flex flex-wrap gap-2">

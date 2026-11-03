@@ -3,12 +3,22 @@
 import { RecordForm } from "@/components/forms/record-form";
 import { saveScholarshipAction } from "@/server/actions/mutations";
 
-export function ScholarshipForm({ countries }: { countries: { value: string; label: string }[] }) {
+export function ScholarshipForm({
+  countries,
+  defaults,
+}: {
+  countries: { value: string; label: string }[];
+  defaults?: Record<string, string>;
+}) {
   return (
     <RecordForm
-      submitLabel="Save scholarship"
+      submitLabel={defaults?.id ? "Save changes" : "Save scholarship"}
+      defaults={defaults}
+      redirectTo="/scholarships/{id}"
       onSave={async (values) => {
         const result = await saveScholarshipAction({
+          id: defaults?.id,
+          version: defaults?.version ? Number(defaults.version) : undefined,
           name: String(values.name ?? ""),
           provider: String(values.provider ?? ""),
           countryId: String(values.countryId ?? ""),

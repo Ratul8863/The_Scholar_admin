@@ -26,11 +26,14 @@ export function RecordForm({
   defaults,
   onSave,
   submitLabel = "Save",
+  redirectTo,
 }: {
   fields: Field[];
   defaults?: Record<string, string>;
   onSave: (values: Record<string, unknown>) => Promise<Result>;
   submitLabel?: string;
+  /** Use `{id}` for the saved record id. */
+  redirectTo?: string;
 }) {
   const router = useRouter();
   const [message, setMessage] = useState("");
@@ -49,7 +52,8 @@ export function RecordForm({
         setDuplicates(matches);
         return;
       }
-      router.push(".");
+      const target = (redirectTo ?? ".").replaceAll("{id}", result.data.id);
+      router.push(target);
       router.refresh();
     });
   }

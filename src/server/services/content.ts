@@ -10,7 +10,7 @@ import { canTransition, permissionsForTransition } from "@/server/domain/workflo
 import { writeAudit } from "@/server/services/audit";
 import { cleanDate, cleanUrl, syncDeadline } from "@/server/services/relations";
 import { notifyUser } from "@/server/services/notify";
-import { oid, ready, saveUpdate, type DocModel } from "@/server/services/query";
+import { archiveDoc, oid, ready, saveUpdate, type DocModel } from "@/server/services/query";
 import { getSettings } from "@/server/services/settings";
 
 const contents = Content as unknown as DocModel;
@@ -140,6 +140,11 @@ export async function getContent(id: string) {
   const doc = await Content.findOne({ _id: oid(id), archivedAt: null }).lean();
   if (!doc) throw new AppError("not_found", "Content was not found.");
   return asRecord(doc);
+}
+
+export async function archiveContent(user: CurrentUser, id: string) {
+  await archiveDoc(contents, id, user.id);
+  await writeAudit({ actorUserId: user.id, action: "archive", entityType: "content", entityId: id });
 }
 
 export async function listContent(status?: string) {

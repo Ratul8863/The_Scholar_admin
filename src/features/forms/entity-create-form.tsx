@@ -7,10 +7,14 @@ export function EntityCreateForm({
   kind,
   countries,
   defaults,
+  redirectTo,
+  submitLabel,
 }: {
   kind: "university" | "opportunity" | "emergency" | "content" | "professor-university" | "department" | "professor" | "program";
   countries?: { value: string; label: string }[];
   defaults?: Record<string, string>;
+  redirectTo?: string;
+  submitLabel?: string;
 }) {
   const countryField = { section: "Record", name: "countryId", label: "Country", type: "select" as const, lookup: "country" as const, options: countries ?? [], required: true };
   const fields = {
@@ -24,10 +28,23 @@ export function EntityCreateForm({
     program: [ { section: "Program", name: "name", label: "Program name", required: true }, { section: "Program", name: "department", label: "Department" }, { section: "Program", name: "faculty", label: "Faculty" }, { section: "Program", name: "language", label: "Language" }, { section: "Program", name: "tuitionFee", label: "Tuition", type: "number" as const }, { section: "Program", name: "currency", label: "Currency" }, { section: "Program", name: "applicationFee", label: "Application fee", type: "number" as const }, { section: "Program", name: "eligibility", label: "Eligibility", type: "textarea" as const }, { section: "Program", name: "academicRequirements", label: "Academic requirements", type: "textarea" as const }, { section: "Program", name: "bangladeshEligible", label: "Bangladesh eligible", type: "select" as const, options: ["unknown", "yes", "no"].map((value) => ({ value, label: value })) }, { section: "Program", name: "scholarshipAvailable", label: "Scholarship available", type: "select" as const, options: ["unknown", "yes", "no"].map((value) => ({ value, label: value })) } ],
   }[kind];
 
+  const defaultRedirect = {
+    university: "/universities/{id}",
+    opportunity: "/opportunities/view/{id}",
+    emergency: "/emergency/{id}",
+    content: "/content/{id}",
+    "professor-university": "/professors/universities/{id}",
+    department: "/professors/departments/{id}",
+    professor: "/professors/records/{id}",
+    program: "/universities/programs/{id}",
+  }[kind];
+
   return (
     <RecordForm
       fields={fields}
       defaults={defaults}
+      submitLabel={submitLabel ?? (defaults?.id ? "Save changes" : "Save")}
+      redirectTo={redirectTo ?? defaultRedirect}
       onSave={async (values) => {
         const payload = { ...defaults, ...values };
         const result = kind === "university" ? await saveUniversityAction(payload)

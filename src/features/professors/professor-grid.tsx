@@ -17,6 +17,16 @@ export function ProfessorGrid({ rows }: { rows: RowRecord[] }) {
     { accessorKey: "designation", header: "Designation" },
     { accessorKey: "email", header: "Email", cell: ({ row }) => <InlineEmail row={row.original} onSaved={() => router.refresh()} /> },
     { accessorKey: "researchAreas", header: "Research areas" },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => (
+        <div className="flex flex-wrap gap-2">
+          <Link className="text-sm text-primary" href={`/professors/records/${row.original.id}`} prefetch={false}>View</Link>
+          <Link className="text-sm text-primary" href={`/professors/records/${row.original.id}/edit`} prefetch={false}>Edit</Link>
+        </div>
+      ),
+    },
   ];
   return (
     <div>
