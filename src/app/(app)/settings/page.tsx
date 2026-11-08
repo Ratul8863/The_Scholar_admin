@@ -1,11 +1,22 @@
 import { listCatalog, listCountries, listCustomFields, listRoles, listStatuses, listTemplates, getSettings } from "@/server/services/settings";
-import { saveCatalogAction, saveCountryAction, saveCustomFieldAction, saveSettingsAction, saveStatusAction, saveTemplateAction } from "@/server/actions/mutations";
+import {
+  deleteCatalogAction,
+  deleteCountryAction,
+  deleteStatusAction,
+  saveCatalogAction,
+  saveCountryAction,
+  saveCustomFieldAction,
+  saveSettingsAction,
+  saveStatusAction,
+  saveTemplateAction,
+} from "@/server/actions/mutations";
 import { PageHeader, SectionCard } from "@/components/layout/page";
 import { Input, Select, Textarea } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { CUSTOM_FIELD_TYPES } from "@/server/domain/custom-fields";
 import { PERMISSIONS } from "@/server/permissions/catalog";
 import { RoleEditor } from "@/features/settings/role-editor";
+import { CatalogRows, CountryRows, StatusRows } from "@/features/settings/reference-rows";
 
 export default async function SettingsPage() {
   const [countries, degrees, funding, fields, areas, documents, statuses, customFields, roles, templates, settings] = await Promise.all([
@@ -23,12 +34,27 @@ export default async function SettingsPage() {
   ]);
   return (
     <div className="space-y-4">
-      <PageHeader title="Settings" description="Configurable reference data. Structural changes are written to the activity log." />
+      <PageHeader title="Settings" description="Configurable reference data. Rename and delete are allowed for countries, catalogs, and statuses." />
       <SectionCard title="Countries">
         <div id="countries" className="scroll-mt-24">
-          <p className="type-14 mb-3">Shared by universities, scholarships, and professor research. Add a country once; it appears in every module.</p>
-          <ul className="mb-3 text-sm">{countries.map((country) => <li key={String(country.id)}>{String(country.name)} ({String(country.code)}) {country.active === false ? "· inactive" : ""}</li>)}</ul>
-          <form action={saveCountryAction} className="grid gap-2 md:grid-cols-2 xl:grid-cols-4"><Input name="name" placeholder="Name" required /><Input name="code" placeholder="Code" required /><Input name="displayOrder" type="number" placeholder="Order" /><Button type="submit">Add country</Button></form>
+          <p className="type-14 mb-3">Shared by universities, scholarships, and professor research. You can rename any country; the new name appears everywhere.</p>
+          <CountryRows
+            rows={countries.map((country) => ({
+              id: String(country.id),
+              name: String(country.name),
+              code: String(country.code ?? ""),
+              displayOrder: Number(country.displayOrder ?? 0),
+              active: country.active !== false,
+            }))}
+            onSave={saveCountryAction}
+            onDelete={deleteCountryAction}
+          />
+          <form action={saveCountryAction} className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+            <Input name="name" placeholder="Name" required />
+            <Input name="code" placeholder="Code" required />
+            <Input name="displayOrder" type="number" placeholder="Order" />
+            <Button type="submit">Add country</Button>
+          </form>
         </div>
       </SectionCard>
       <Catalog title="Degree levels" kind="degreeLevels" rows={degrees} />
@@ -37,8 +63,24 @@ export default async function SettingsPage() {
       <Catalog title="Research areas" kind="researchAreas" rows={areas} />
       <Catalog title="Document types" kind="documentTypes" rows={documents} />
       <SectionCard title="Statuses">
-        <ul className="mb-3 text-sm">{statuses.map((status) => <li key={String(status.id)}>{String(status.scope)} · {String(status.label)}</li>)}</ul>
-        <form action={saveStatusAction} className="grid gap-2 md:grid-cols-2 xl:grid-cols-4"><Input name="scope" placeholder="Scope" required /><Input name="key" placeholder="Key" required /><Input name="label" placeholder="Label" required /><Button type="submit">Save status</Button></form>
+        <p className="type-14 mb-3">Edit labels or delete unused status values. Scope and key identify where the status is used.</p>
+        <StatusRows
+          rows={statuses.map((status) => ({
+            id: String(status.id),
+            scope: String(status.scope),
+            key: String(status.key),
+            label: String(status.label),
+            displayOrder: Number(status.displayOrder ?? 0),
+          }))}
+          onSave={saveStatusAction}
+          onDelete={deleteStatusAction}
+        />
+        <form action={saveStatusAction} className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+          <Input name="scope" placeholder="Scope" required />
+          <Input name="key" placeholder="Key" required />
+          <Input name="label" placeholder="Label" required />
+          <Button type="submit">Add status</Button>
+        </form>
       </SectionCard>
       <SectionCard title="Custom fields">
         <ul className="mb-3 text-sm">{customFields.map((field) => <li key={String(field.id)}>{String(field.entityType)} · {String(field.label)} · {String(field.type)}</li>)}</ul>
@@ -74,11 +116,27 @@ export default async function SettingsPage() {
   );
 }
 
-function Catalog({ title, kind, rows }: { title: string; kind: "degreeLevels" | "fundingTypes" | "fieldsOfStudy" | "researchAreas" | "documentTypes"; rows: Record<string, unknown>[] }) {
+function Catalog({
+  title,
+  kind,
+  rows,
+}: {
+  title: string;
+  kind: "degreeLevels" | "fundingTypes" | "fieldsOfStudy" | "researchAreas" | "documentTypes";
+  rows: Record<string, unknown>[];
+}) {
   return (
     <SectionCard title={title}>
-      <ul className="mb-3 text-sm">{rows.map((row) => <li key={String(row.id)}>{String(row.name)}</li>)}</ul>
-      <form action={saveCatalogAction.bind(null, kind)} className="grid gap-2 md:grid-cols-3"><Input name="name" placeholder="Name" required /><Input name="description" placeholder="Description" /><Button type="submit">Add</Button></form>
+      <CatalogRows
+        rows={rows.map((row) => ({ id: String(row.id), name: String(row.name), description: String(row.description ?? "") }))}
+        onSave={saveCatalogAction.bind(null, kind)}
+        onDelete={deleteCatalogAction.bind(null, kind)}
+      />
+      <form action={saveCatalogAction.bind(null, kind)} className="mt-4 grid gap-2 md:grid-cols-3">
+        <Input name="name" placeholder="Name" required />
+        <Input name="description" placeholder="Description" />
+        <Button type="submit">Add</Button>
+      </form>
     </SectionCard>
   );
 }

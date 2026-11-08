@@ -63,12 +63,20 @@ export async function listCountries() {
   });
 }
 
+function formFlag(value: unknown, fallback = true) {
+  if (value == null || value === "") return fallback;
+  return value === true || value === "true" || value === "on" || value === "1";
+}
+
 export async function saveCountry(user: CurrentUser, input: Record<string, unknown>) {
   const name = String(input.name ?? "").trim();
   const code = String(input.code ?? "").trim().toUpperCase();
   if (name.length < 2 || code.length < 2) throw new AppError("validation", "Country name and code are required.");
   if (input.id) {
-    await Country.updateOne({ _id: oid(String(input.id)) }, { $set: { name, code, flag: String(input.flag ?? ""), active: input.active !== false, displayOrder: Number(input.displayOrder ?? 0) } });
+    await Country.updateOne(
+      { _id: oid(String(input.id)) },
+      { $set: { name, code, flag: String(input.flag ?? ""), active: formFlag(input.active, false), displayOrder: Number(input.displayOrder ?? 0) } },
+    );
     await writeAudit({ actorUserId: user.id, action: "edit", entityType: "country", entityId: String(input.id) });
     clearReferenceCache();
     return String(input.id);
@@ -114,8 +122,42 @@ export async function saveStatus(user: CurrentUser, input: Record<string, unknow
   const key = String(input.key ?? "").trim();
   const label = String(input.label ?? "").trim();
   if (!scope || !key || !label) throw new AppError("validation", "Scope, key, and label are required.");
+  if (input.id) {
+    await StatusConfiguration.updateOne(
+      { _id: oid(String(input.id)) },
+      { $set: { scope, key, label, active: input.active !== false, displayOrder: Number(input.displayOrder ?? 0) } },
+    );
+    await writeAudit({ actorUserId: user.id, action: "edit", entityType: "status", entityId: String(input.id) });
+    clearReferenceCache();
+    return String(input.id);
+  }
   await StatusConfiguration.updateOne({ scope, key }, { $set: { label, active: input.active !== false, displayOrder: Number(input.displayOrder ?? 0) } }, { upsert: true });
   await writeAudit({ actorUserId: user.id, action: "edit", entityType: "status", entityId: `${scope}:${key}` });
+  clearReferenceCache();
+  return `${scope}:${key}`;
+}
+
+export async function deleteCountry(user: CurrentUser, id: string) {
+  await ready();
+  const result = await Country.deleteOne({ _id: oid(id) });
+  if (!result.deletedCount) throw new AppError("not_found", "Country was not found.");
+  await writeAudit({ actorUserId: user.id, action: "delete", entityType: "country", entityId: id });
+  clearReferenceCache();
+}
+
+export async function deleteCatalogItem(user: CurrentUser, kind: keyof typeof catalogs, id: string) {
+  await ready();
+  const result = await catalogs[kind].deleteOne({ _id: oid(id) });
+  if (!result.deletedCount) throw new AppError("not_found", "Catalog item was not found.");
+  await writeAudit({ actorUserId: user.id, action: "delete", entityType: kind, entityId: id });
+  clearReferenceCache();
+}
+
+export async function deleteStatus(user: CurrentUser, id: string) {
+  await ready();
+  const result = await StatusConfiguration.deleteOne({ _id: oid(id) });
+  if (!result.deletedCount) throw new AppError("not_found", "Status was not found.");
+  await writeAudit({ actorUserId: user.id, action: "delete", entityType: "status", entityId: id });
   clearReferenceCache();
 }
 

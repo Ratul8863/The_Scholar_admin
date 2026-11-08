@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getScholarship } from "@/server/services/scholarships";
-import { listCountries } from "@/server/services/settings";
+import { listCatalog, listCountries } from "@/server/services/settings";
 import { assertPermission, getCurrentUser } from "@/server/auth/current-user";
 import { ScholarshipForm } from "@/features/scholarships/scholarship-form";
 import { PageHeader } from "@/components/layout/page";
@@ -21,18 +21,21 @@ export default async function EditScholarshipPage({ params }: { params: Promise<
   const eligibility = (record.eligibility ?? {}) as Record<string, unknown>;
   const funding = (record.funding ?? {}) as Record<string, unknown>;
   const application = (record.application ?? {}) as Record<string, unknown>;
-  const countries = (await listCountries()).filter((country) => country.active !== false).map((country) => ({ value: String(country.id), label: String(country.name) }));
+  const [countries, degrees] = await Promise.all([listCountries(), listCatalog("degreeLevels")]);
+  const stipendRange = stringField(funding.stipendRange) || (funding.monthlyStipend == null ? "" : String(funding.monthlyStipend));
   return (
     <div>
       <PageHeader title="Edit scholarship" description="Correct wrong facts from an official source, then save." />
       <ScholarshipForm
-        countries={countries}
+        countries={countries.filter((country) => country.active !== false).map((country) => ({ value: String(country.id), label: String(country.name) }))}
+        degreeLevels={degrees.filter((row) => row.active !== false).map((row) => ({ value: String(row.id), label: String(row.name) }))}
         defaults={{
           id,
           version: stringField(record.version ?? 1),
           name: stringField(record.name),
           provider: stringField(record.provider),
           countryId: stringField(record.countryId),
+          degreeLevelIds: Array.isArray(record.degreeLevelIds) ? record.degreeLevelIds.map(String).join(",") : "",
           officialUrl: stringField(record.officialUrl),
           applicationUrl: stringField(record.applicationUrl),
           researchStatus: stringField(record.researchStatus || "new"),
@@ -48,7 +51,7 @@ export default async function EditScholarshipPage({ params }: { params: Promise<
           toefl: stringField(eligibility.toefl),
           eligibilitySummary: stringField(eligibility.summary),
           tuitionCoverage: stringField(funding.tuitionCoverage),
-          monthlyStipend: funding.monthlyStipend == null ? "" : String(funding.monthlyStipend),
+          stipendRange,
           fundingNotes: stringField(funding.notes),
           applicationMethod: stringField(application.method),
           applicationFee: application.fee == null ? "" : String(application.fee),

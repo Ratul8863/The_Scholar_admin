@@ -12,11 +12,12 @@ import { panelClass } from "@/components/ui/styles";
 type Field = {
   name: string;
   label: string;
-  type?: "text" | "textarea" | "date" | "number" | "select" | "url";
+  type?: "text" | "textarea" | "date" | "number" | "select" | "url" | "multiselect";
   options?: { value: string; label: string }[];
   lookup?: "country" | "university" | "professor";
   section: string;
   required?: boolean;
+  hint?: string;
 };
 
 type Result = { ok: true; data: { id: string } } | { ok: false; error: { message: string; code: string; details?: unknown } };
@@ -72,6 +73,14 @@ export function RecordForm({
                 <label htmlFor={fieldId} className="text-sm font-medium">{field.label}{field.required ? <span className="text-danger"> *</span> : null}</label>
                 {field.type === "textarea" ? (
                   <Textarea id={fieldId} {...registration} />
+                ) : field.type === "multiselect" ? (
+                  <MultiSelect
+                    id={fieldId}
+                    name={field.name}
+                    options={field.options ?? []}
+                    defaultValue={defaults?.[field.name] ?? ""}
+                    onChange={(next) => form.setValue(field.name, next, { shouldDirty: true, shouldTouch: true })}
+                  />
                 ) : field.lookup ? (
                   <Combobox id={fieldId} lookup={field.lookup} options={field.options} placeholder={`Search ${field.label.toLowerCase()}`} aria-label={field.label} required={field.required} defaultValue={defaults?.[field.name] ?? ""} {...registration} />
                 ) : field.type === "select" ? (
@@ -79,6 +88,7 @@ export function RecordForm({
                 ) : (
                   <Input id={fieldId} type={field.type === "date" || field.type === "number" || field.type === "url" ? field.type : "text"} defaultValue={field.type === "date" ? defaults?.[field.name] ?? "" : undefined} {...registration} />
                 )}
+                {field.hint ? <span className="type-14">{field.hint}</span> : null}
                 {form.formState.errors[field.name] ? <span className="text-xs text-danger" role="alert">{form.formState.errors[field.name]?.message}</span> : null}
               </div>
               );
@@ -104,5 +114,50 @@ export function RecordForm({
         <Button type="submit" disabled={pending} aria-busy={pending}>{pending ? "Saving" : submitLabel}</Button>
       </div>
     </form>
+  );
+}
+
+function MultiSelect({
+  id,
+  name,
+  options,
+  defaultValue,
+  onChange,
+}: {
+  id: string;
+  name: string;
+  options: { value: string; label: string }[];
+  defaultValue: string;
+  onChange: (value: string) => void;
+}) {
+  const [selected, setSelected] = useState(() => new Set(defaultValue.split(",").map((item) => item.trim()).filter(Boolean)));
+
+  function toggle(value: string) {
+    const next = new Set(selected);
+    if (next.has(value)) next.delete(value);
+    else next.add(value);
+    setSelected(next);
+    onChange([...next].join(","));
+  }
+
+  return (
+    <div id={id} className="flex flex-wrap gap-2" role="group" aria-label={name}>
+      <input type="hidden" name={name} value={[...selected].join(",")} readOnly />
+      {options.length === 0 ? <p className="type-14">Add degree levels in Settings first.</p> : null}
+      {options.map((option) => {
+        const active = selected.has(option.value);
+        return (
+          <button
+            key={option.value}
+            type="button"
+            className={active ? "go-pill" : "nav-pill"}
+            aria-pressed={active}
+            onClick={() => toggle(option.value)}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
   );
 }

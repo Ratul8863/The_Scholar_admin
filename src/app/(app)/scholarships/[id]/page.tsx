@@ -10,6 +10,7 @@ import { addNoteAction, addSourceAction, archiveScholarshipAction } from "@/serv
 import { can, getCurrentUser } from "@/server/auth/current-user";
 import { Note, Source } from "@/models/platform";
 import { oid } from "@/server/services/query";
+import { listCatalog } from "@/server/services/settings";
 import { Input, Select, Textarea } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AlertCard } from "@/components/ui/card";
@@ -27,9 +28,17 @@ export default async function ScholarshipDetailPage({ params }: { params: Promis
   const user = await getCurrentUser();
   const score = completeness(record, [...REQUIRED_FIELDS.scholarship], (record.fieldAvailability as Record<string, "unknown" | "not_public">) ?? {});
   const state = deadlineState({ openingDate: record.openingDate as string | null, closingDate: record.closingDate as string | null, timeZone: String(record.timezone ?? "UTC") });
-  const notes = await Note.find({ entityType: "scholarship", entityId: oid(id) }).sort({ createdAt: -1 }).lean();
-  const sources = await Source.find({ entityType: "scholarship", entityId: oid(id) }).lean();
+  const [notes, sources, degrees] = await Promise.all([
+    Note.find({ entityType: "scholarship", entityId: oid(id) }).sort({ createdAt: -1 }).lean(),
+    Source.find({ entityType: "scholarship", entityId: oid(id) }).lean(),
+    listCatalog("degreeLevels"),
+  ]);
   const eligibility = (record.eligibility ?? {}) as Record<string, unknown>;
+  const funding = (record.funding ?? {}) as Record<string, unknown>;
+  const degreeNames = degrees
+    .filter((row) => Array.isArray(record.degreeLevelIds) && record.degreeLevelIds.map(String).includes(String(row.id)))
+    .map((row) => String(row.name));
+  const stipend = String(funding.stipendRange || "").trim() || (funding.monthlyStipend == null ? "" : String(funding.monthlyStipend));
   return (
     <div className="space-y-4">
       <PageHeader
@@ -61,6 +70,8 @@ export default async function ScholarshipDetailPage({ params }: { params: Promis
       <div className="grid gap-4 lg:grid-cols-2">
         <SectionCard title="Overview">
           <dl className="grid gap-2 text-sm">
+            <div><dt className="text-muted">Degree level</dt><dd>{degreeNames.length ? degreeNames.join(", ") : "Not verified"}</dd></div>
+            <div><dt className="text-muted">Stipend range</dt><dd>{stipend || "Not verified"}</dd></div>
             <div><dt className="text-muted">Official link</dt><dd className="break-all">{record.officialUrl ? <a className="text-primary" href={String(record.officialUrl)}>{String(record.officialUrl)}</a> : "Not verified"}</dd></div>
             <div><dt className="text-muted">Application link</dt><dd className="break-all">{record.applicationUrl ? String(record.applicationUrl) : "Not verified"}</dd></div>
           </dl>

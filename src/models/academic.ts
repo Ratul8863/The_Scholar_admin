@@ -17,6 +17,7 @@ const scholarshipSchema = new Schema(
       tuitionPercentage: { type: Number, default: null },
       monthlyStipend: { type: Number, default: null },
       annualStipend: { type: Number, default: null },
+      stipendRange: { type: String, default: "" },
       accommodation: { type: String, default: "" },
       airfare: { type: String, default: "" },
       insurance: { type: String, default: "" },

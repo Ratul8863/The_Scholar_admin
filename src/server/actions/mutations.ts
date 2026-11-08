@@ -31,6 +31,9 @@ import { acceptInvitation, changeUserRole, inviteAdmin, inviteMember, revokeInvi
 import { commitImport, parseImport } from "@/server/services/imports";
 import { markNotificationsRead } from "@/server/services/notify";
 import {
+  deleteCatalogItem,
+  deleteCountry,
+  deleteStatus,
   saveCatalogItem,
   saveCountry,
   saveCustomField,
@@ -441,8 +444,23 @@ export async function saveCountryAction(formData: FormData) {
     const user = await gate("settings.manage");
     const id = await saveCountry(user, text(formData));
     revalidatePath("/settings");
+    revalidatePath("/universities");
+    revalidatePath("/professors");
+    revalidatePath("/scholarships");
     return { id };
   }));
+}
+
+export async function deleteCountryAction(id: string) {
+  return runAction(async () => {
+    const user = await gate("settings.manage");
+    await deleteCountry(user, id);
+    revalidatePath("/settings");
+    revalidatePath("/universities");
+    revalidatePath("/professors");
+    revalidatePath("/scholarships");
+    return { id };
+  });
 }
 
 export async function saveCatalogAction(kind: keyof typeof catalogs, formData: FormData) {
@@ -454,13 +472,31 @@ export async function saveCatalogAction(kind: keyof typeof catalogs, formData: F
   }));
 }
 
+export async function deleteCatalogAction(kind: keyof typeof catalogs, id: string) {
+  return runAction(async () => {
+    const user = await gate("settings.manage");
+    await deleteCatalogItem(user, kind, id);
+    revalidatePath("/settings");
+    return { id };
+  });
+}
+
 export async function saveStatusAction(formData: FormData) {
   await voidAction(runAction(async () => {
     const user = await gate("settings.manage");
-    await saveStatus(user, text(formData));
+    const id = await saveStatus(user, text(formData));
     revalidatePath("/settings");
-    return { id: "ok" };
+    return { id };
   }));
+}
+
+export async function deleteStatusAction(id: string) {
+  return runAction(async () => {
+    const user = await gate("settings.manage");
+    await deleteStatus(user, id);
+    revalidatePath("/settings");
+    return { id };
+  });
 }
 
 export async function saveCustomFieldAction(formData: FormData) {

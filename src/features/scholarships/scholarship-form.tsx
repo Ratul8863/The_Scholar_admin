@@ -5,9 +5,11 @@ import { saveScholarshipAction } from "@/server/actions/mutations";
 
 export function ScholarshipForm({
   countries,
+  degreeLevels = [],
   defaults,
 }: {
   countries: { value: string; label: string }[];
+  degreeLevels?: { value: string; label: string }[];
   defaults?: Record<string, string>;
 }) {
   return (
@@ -22,6 +24,10 @@ export function ScholarshipForm({
           name: String(values.name ?? ""),
           provider: String(values.provider ?? ""),
           countryId: String(values.countryId ?? ""),
+          degreeLevelIds: String(values.degreeLevelIds ?? "")
+            .split(",")
+            .map((item) => item.trim())
+            .filter(Boolean),
           officialUrl: String(values.officialUrl ?? ""),
           applicationUrl: String(values.applicationUrl ?? ""),
           openingDate: String(values.openingDate ?? ""),
@@ -38,7 +44,11 @@ export function ScholarshipForm({
             toefl: values.toefl,
             summary: values.eligibilitySummary,
           },
-          funding: { tuitionCoverage: values.tuitionCoverage, monthlyStipend: values.monthlyStipend ? Number(values.monthlyStipend) : null, notes: values.fundingNotes },
+          funding: {
+            tuitionCoverage: values.tuitionCoverage,
+            stipendRange: String(values.stipendRange ?? "").trim(),
+            notes: values.fundingNotes,
+          },
           application: {
             method: values.applicationMethod,
             fee: values.applicationFee ? Number(values.applicationFee) : null,
@@ -55,6 +65,14 @@ export function ScholarshipForm({
         { section: "Overview", name: "name", label: "Scholarship name", required: true },
         { section: "Overview", name: "provider", label: "Provider", required: true },
         { section: "Overview", name: "countryId", label: "Country", type: "select", lookup: "country", options: countries, required: true },
+        {
+          section: "Overview",
+          name: "degreeLevelIds",
+          label: "Degree level",
+          type: "multiselect",
+          options: degreeLevels,
+          hint: "Select every level this scholarship covers. Manage the list in Settings.",
+        },
         { section: "Overview", name: "officialUrl", label: "Official link", type: "url" },
         { section: "Overview", name: "applicationUrl", label: "Application link", type: "url" },
         { section: "Overview", name: "researchStatus", label: "Research status", type: "select", options: ["new", "researching", "fact_checking", "verified", "needs_correction", "rejected"].map((value) => ({ value, label: value })) },
@@ -70,7 +88,12 @@ export function ScholarshipForm({
         { section: "Eligibility", name: "toefl", label: "TOEFL" },
         { section: "Eligibility", name: "eligibilitySummary", label: "Eligibility summary", type: "textarea" },
         { section: "Funding", name: "tuitionCoverage", label: "Tuition coverage" },
-        { section: "Funding", name: "monthlyStipend", label: "Monthly stipend", type: "number" },
+        {
+          section: "Funding",
+          name: "stipendRange",
+          label: "Stipend range",
+          hint: "Write the range as published, e.g. €800–1,200 / month or Fully funded (no separate stipend).",
+        },
         { section: "Funding", name: "fundingNotes", label: "Funding notes", type: "textarea" },
         { section: "Application", name: "applicationMethod", label: "Application method" },
         { section: "Application", name: "applicationFee", label: "Application fee", type: "number" },
